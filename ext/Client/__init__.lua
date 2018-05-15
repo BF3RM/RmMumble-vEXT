@@ -1,14 +1,16 @@
 class 'MumbleImplementationClient'
 
 local MumbleManager = (require "Logic/Mumble/MumbleManager").GetInstance()
-local MumbleEventManager = require "Logic/Mumble/MumbleEventManager"
-local PingEvent = require "Logic/Mumble/Event/MumblePingEvent"
+local MumbleTimerManager = require "Logic/Mumble/MumbleTimerManager"
+local PingEvent = require "Logic/Mumble/TimedEvents/MumblePingEvent"
+local SocketReceiver = require "Logic/Mumble/TimedEvents/MumbleSocketReceiverEvent"
 
 function MumbleImplementationClient:__init()
 	print("Initializing MumbleImplementationClient")
 
-	MumbleManager:AddListener(MumbleManager.EVENT_MUMBLE_NOT_AVAILABLE, self.OnMumbleNotAvailable)
-	MumbleEventManager:AddEvent(PingEvent)
+	MumbleManager:AddListener(MumbleManager.EVENT_MUMBLE_NOT_AVAILABLE, self, self.OnMumbleNotAvailable)
+	MumbleTimerManager:AddEvent(PingEvent)
+	MumbleTimerManager:AddEvent(SocketReceiver)
 
 	self:RegisterVars()
 	self:RegisterEvents()
@@ -38,7 +40,7 @@ end
 
 function MumbleImplementationClient:OnUpdate(p_Delta, p_SimulationDelta)
 	MumbleManager:Update(p_Delta)
-	MumbleEventManager:Update(p_Delta)
+	MumbleTimerManager:Update(p_Delta)
 end
 
 g_MumbleImplementationClient = MumbleImplementationClient()

@@ -5,15 +5,11 @@ function MumbleServerManager:__init()
 end
 
 function MumbleServerManager:SubscribeEvents()
-    NetEvents:Subscribe('MumbleManager:RequestServerName', self, self.OnRequestServerName)
+    NetEvents:Subscribe('MumbleServerManager:RequestServerUuid', self, self.OnRequestServerUuid)
 end
 
-function MumbleServerManager:OnRequestServerName(player)
-    print ('player requested server name')
-    local settings = ServerSettings(ResourceManager:GetSettings('ServerSettings'))
-    print ('sending ') 
-    print(settings.serverName)
-    NetEvents:SendTo('MumbleManagerServer:RequestServerName', player, settings.serverName)
+function MumbleServerManager:OnRequestServerUuid(player)
+    NetEvents:SendTo('MumbleServerManager:OnServerUuid', player, tostring(RCON:GetServerGuid()))
 end
 
 local mumbleServerManager = MumbleServerManager()

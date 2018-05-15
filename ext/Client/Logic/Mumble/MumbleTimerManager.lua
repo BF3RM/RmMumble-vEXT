@@ -1,13 +1,13 @@
-class "MumbleEventManager" 
+class "MumbleTimerManager" 
 
 local FunctionUtilities = require 'Logic/Utilities/FunctionUtilities'
 
-function MumbleEventManager:__init()
+function MumbleTimerManager:__init()
     self.Events = {}
     self.Time = 0
 end
 
-function MumbleEventManager:Update(deltaTime)
+function MumbleTimerManager:Update(deltaTime)
     if self.Time > 999999999 then
         for index, event in pairs(self.Events) do
             event.LastRun = event.Timeout - self.Time - self.LastRun
@@ -32,7 +32,7 @@ function MumbleEventManager:Update(deltaTime)
     end
 end
 
-function MumbleEventManager:AddEvent(newEvent)
+function MumbleTimerManager:AddEvent(newEvent)
     if not FunctionUtilities:IsFunction(newEvent.TriggerEvent) then
         print('MumbleEventManager:AddEvent: The passed value is not a valid Event (TriggerEvent() not available)')
         return
@@ -53,5 +53,5 @@ function MumbleEventManager:AddEvent(newEvent)
     table.insert(self.Events, newEvent)
 end
 
-Instance = MumbleEventManager()
+Instance = MumbleTimerManager()
 return Instance
