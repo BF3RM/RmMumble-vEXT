@@ -4,7 +4,7 @@ class "MumbleSocketReceiverEvent"
 local MumbleManager = (require "Logic/Mumble/MumbleManager").GetInstance()
 
 function MumbleSocketReceiverEvent:__init()
-    self.Timeout = 0.5 -- Trigger this event every second
+    self.Timeout = 0.05 -- Trigger this event every second
     self.RunOnce = false -- Keep running
     self.PACKET_SIZE = 64
 end
@@ -34,7 +34,7 @@ function MumbleSocketReceiverEvent:TriggerEvent()
     if Data:len() > 0 then
         EventType = string.byte(string.sub(Data, 1, 1))
         EventMessage = string.sub(Data, 2)
-        MumbleManager:OnEvent(EventType, EventMessage)
+        MumbleManager:OnEvent(EventType, EventMessage:gsub('%W',''))
     end
 end
 

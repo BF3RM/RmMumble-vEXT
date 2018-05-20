@@ -2,18 +2,23 @@ class 'MumbleImplementationClient'
 
 local MumbleManager = (require "Logic/Mumble/MumbleManager").GetInstance()
 local MumbleTimerManager = require "Logic/Mumble/MumbleTimerManager"
+
 local PingEvent = require "Logic/Mumble/TimedEvents/MumblePingEvent"
 local SocketReceiver = require "Logic/Mumble/TimedEvents/MumbleSocketReceiverEvent"
+local ServerCheck = require "Logic/Mumble/TimedEvents/MumbleServerCheckEvent"
 
 function MumbleImplementationClient:__init()
 	print("Initializing MumbleImplementationClient")
 
 	MumbleManager:AddListener(MumbleManager.EVENT_MUMBLE_NOT_AVAILABLE, self, self.OnMumbleNotAvailable)
+	
 	MumbleTimerManager:AddEvent(PingEvent)
-	MumbleTimerManager:AddEvent(SocketReceiver)
+	--MumbleTimerManager:AddEvent(SocketReceiver)
+	MumbleTimerManager:AddEvent(ServerCheck)
 
 	self:RegisterVars()
 	self:RegisterEvents()
+	SocketReceiver:__init()
 end 
 
 function MumbleImplementationClient:OnMumbleNotAvailable()
@@ -41,6 +46,7 @@ end
 function MumbleImplementationClient:OnUpdate(p_Delta, p_SimulationDelta)
 	MumbleManager:Update(p_Delta)
 	MumbleTimerManager:Update(p_Delta)
+	SocketReceiver:TriggerEvent() -- Let's trigger it manually at each tick for now
 end
 
 g_MumbleImplementationClient = MumbleImplementationClient()

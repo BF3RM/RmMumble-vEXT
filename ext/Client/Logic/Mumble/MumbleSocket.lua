@@ -17,8 +17,6 @@ function MumbleSocket:Connect()
     self.Socket = Net:Socket(NetSocketFamily.INET, NetSocketType.Stream)
     self.IsConnected = self.Socket:Connect('127.0.0.1', self.MUMBLE_PORT)
     
-    self.Socket:Write()
-
     return self.IsConnected
 end
 
