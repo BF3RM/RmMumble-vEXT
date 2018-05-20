@@ -7,10 +7,15 @@ function MumbleSocketReceiverEvent:__init()
     self.Timeout = 0.05 -- Trigger this event every second
     self.RunOnce = false -- Keep running
     self.PACKET_SIZE = 64
+    self.LastTrigger = 0
+    self.LastConnect = 0
 end
 
 function MumbleSocketReceiverEvent:TriggerEvent()
-    if MumbleManager.MumbleSocket.IsConnected ~= 0 and MumbleManager.MumbleSocket.IsConnected ~= 10035 then
+    self.LastTrigger = os.time(os.date("!*t"))
+
+    if MumbleManager.MumbleSocket.IsConnected ~= 0 and MumbleManager.MumbleSocket.IsConnected ~= 10035 and self.LastTrigger - self.LastConnect > 5 then
+        self.LastConnect = LastTrigger
         MumbleManager.MumbleSocket:Connect()
         return
     end

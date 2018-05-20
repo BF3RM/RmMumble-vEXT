@@ -79,8 +79,10 @@ function MumbleManager:OnUuidRequested()
 end
 
 function MumbleManager:OnUuidReceived(Uuid)
-    Message = FunctionUtilities:RightPadding(string.format('%c%s|%s', self.GET_UUID_TYPE, Uuid, PlayerManager:GetLocalPlayer().name:sub(0, 27)), 64, '\0')
-    self.MumbleSocket.Socket:Write(Message)
+    if PlayerManager ~= nil and PlayerManager:GetLocalPlayer() ~= nil and PlayerManager:GetLocalPlayer().name ~= nil then
+        Message = FunctionUtilities:RightPadding(string.format('%c%s|%s', self.GET_UUID_TYPE, Uuid, PlayerManager:GetLocalPlayer().name:sub(0, 27)), 64, '\0')
+        self.MumbleSocket.Socket:Write(Message)
+    end
 end
 
 local Instance = MumbleManager()
