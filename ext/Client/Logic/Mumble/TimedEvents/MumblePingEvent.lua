@@ -26,7 +26,7 @@ function MumblePingEvent:TriggerEvent()
     NumOfBytes, Status = MumbleManager.MumbleSocket.Socket:Write(Message)
     if Status == 0 and self.FirstConnection then
         self.FirstConnection = false
-        MumbleManager:OnUuidRequested()
+     --   MumbleManager:OnUuidRequested()
     end
 
     if Status ~= 0 then

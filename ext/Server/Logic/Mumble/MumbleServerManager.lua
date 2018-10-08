@@ -9,7 +9,7 @@ function MumbleServerManager:SubscribeEvents()
 end
 
 function MumbleServerManager:OnRequestServerUuid(player)
-    NetEvents:SendTo('MumbleServerManager:OnServerUuid', player, tostring(RCON:GetServerGuid()))
+    NetEvents:SendTo('MumbleServerManager:OnServerUuid', player, tostring(RCON:GetServerGUID()))
 end
 
 local mumbleServerManager = MumbleServerManager()

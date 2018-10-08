@@ -19,6 +19,8 @@ function MumbleImplementationClient:__init()
 	self:RegisterVars()
 	self:RegisterEvents()
 	SocketReceiver:__init()
+
+	self.InGame = false
 end 
 
 function MumbleImplementationClient:OnMumbleNotAvailable()
@@ -32,6 +34,11 @@ end
 
 function MumbleImplementationClient:RegisterEvents()
 	Events:Subscribe("Engine:Update", self, self.OnUpdate)
+	Events:Subscribe("Player:Connected", self, self.OnJoining)
+end
+
+function MumbleImplementationClient:OnJoining()
+	self.InGame = true
 end
 
 function MumbleImplementationClient:OnLoaded()
@@ -44,9 +51,11 @@ function MumbleImplementationClient:OnLoaded()
 end
 
 function MumbleImplementationClient:OnUpdate(p_Delta, p_SimulationDelta)
-	MumbleManager:Update(p_Delta)
-	MumbleTimerManager:Update(p_Delta)
-	SocketReceiver:TriggerEvent() -- Let's trigger it manually at each tick for now
+	if self.InGame then
+		MumbleManager:Update(p_Delta)
+		MumbleTimerManager:Update(p_Delta)
+		SocketReceiver:TriggerEvent() -- Let's trigger it manually at each tick for now
+	end
 end
 
 g_MumbleImplementationClient = MumbleImplementationClient()

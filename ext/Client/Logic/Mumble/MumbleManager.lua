@@ -15,24 +15,86 @@ function MumbleManager:InternalInit()
     self.EVENT_MUMBLE_NOT_AVAILABLE = 'EMNA'
     self.EVENT_MUMBLE_NOT_CONNECTED = 'EMNC'
     self.EVENT_CANNOT_GET_SERVER_INFO = 'ECGSI'
+
     self.STOP_TALKING = 121
     self.START_TALKING = 122
     self.GET_UUID_TYPE = 123
+    
+-- These are the events that you should hook to
+    self.LOCAL_TALKING = 0
+    self.SQUAD_TALKING = 1
+    self.SL_TALKING = 2
+--
+
     self.Listeners = {}
     self.MumbleSocket = require 'Logic/Mumble/MumbleSocket'
 
     self:AddListener(self.GET_UUID_TYPE, self, self.OnUuidRequested)
     self:AddListener(self.START_TALKING, self, self.OnStartTalking)
     self:AddListener(self.STOP_TALKING, self, self.OnStopTalking)
+
+    self:AddListener(self.LOCAL_TALKING, self, self.OnLocalTalking)
+    self:AddListener(self.SQUAD_TALKING, self, self.OnSquadTalking)
+    self:AddListener(self.SL_TALKING, self, self.OnSquadLeaderTalking)
     NetEvents:Subscribe('MumbleServerManager:OnServerUuid', self, self.OnUuidReceived)
 end
 
-function MumbleManager:OnStartTalking(Who)
-    print(Who .. " is talking")
+-- Debug only
+function string.tohex(str)
+    return (str:gsub('.', function (c)
+        return string.format('%02X', string.byte(c))
+    end))
+end
+--
+
+function MumbleManager:OnLocalTalking(Who, Begin)
+    state = 'started'
+    if Begin == false then state = 'stopped' end
+    print (Who .. ' ' .. state .. ' talking locally')
 end
 
-function MumbleManager:OnStopTalking(Who)
-    print(Who .. " is not talking anymore")
+function MumbleManager:OnSquadTalking(Who, Begin)
+    state = 'started'
+    if Begin == false then state = 'stopped' end
+    print (Who .. ' ' .. state .. ' talking on squad voice')
+end
+
+function MumbleManager:OnSquadLeaderTalking(Who, Begin)
+    state = 'started'
+    if Begin == false then state = 'stopped' end
+    print (Who .. ' ' .. state .. ' talking on direct SL')
+end
+
+function MumbleManager:OnStartTalking(Message)
+    Type = Message:byte(2)
+    Who = Message:sub(3):gsub('%W','') 
+    Event = -1
+
+    if Type == 0x0 then
+        Event = self.LOCAL_TALKING
+    elseif Type == 0x1 then
+        Event = self.SQUAD_TALKING
+    elseif Type == 0x2 then
+        Event = self.SL_TALKING
+    end
+
+    self:OnEvent(Event, Who, true)
+end
+
+function MumbleManager:OnStopTalking(Message)
+    Type = Message:byte(2)
+    Who = Message:sub(3):gsub('%W','') 
+    Event = -1
+
+    if Type == 0x0 then
+        Event = self.LOCAL_TALKING
+    elseif Type == 0x1 then
+        Event = self.SQUAD_TALKING
+    elseif Type == 0x2 then
+        Event = self.SL_TALKING
+    end
+
+    self:OnEvent(Event, Who, false)
 end
 
 function MumbleManager:GetInstance()
@@ -75,11 +137,13 @@ function MumbleManager:Update(DeltaTime)
 end
 
 function MumbleManager:OnUuidRequested()
+    print('Retrieving server\'s UUID')
     NetEvents:SendLocal('MumbleServerManager:RequestServerUuid')
 end
 
 function MumbleManager:OnUuidReceived(Uuid)
     if PlayerManager ~= nil and PlayerManager:GetLocalPlayer() ~= nil and PlayerManager:GetLocalPlayer().name ~= nil then
+        print('Sending server\'s UUID to mumble (' .. Uuid .. ')')
         Message = FunctionUtilities:RightPadding(string.format('%c%s|%s', self.GET_UUID_TYPE, Uuid, PlayerManager:GetLocalPlayer().name:sub(0, 27)), 64, '\0')
         self.MumbleSocket.Socket:Write(Message)
     end

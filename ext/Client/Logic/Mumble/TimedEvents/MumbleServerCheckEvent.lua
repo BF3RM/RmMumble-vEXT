@@ -9,7 +9,7 @@ function MumbleServerCheckEvent:__init()
 end
 
 function MumbleServerCheckEvent:TriggerEvent()
-    MumbleManager:OnUuidRequested()
+--   MumbleManager:OnUuidRequested()
 end
 
 Instance = MumbleServerCheckEvent()

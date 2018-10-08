@@ -16,30 +16,36 @@ function MumbleSocketReceiverEvent:TriggerEvent()
 
     if MumbleManager.MumbleSocket.IsConnected ~= 0 and MumbleManager.MumbleSocket.IsConnected ~= 10035 and self.LastTrigger - self.LastConnect > 5 then
         self.LastConnect = LastTrigger
-        MumbleManager.MumbleSocket:Connect()
+        if MumbleManager.MumbleSocket:Connect() then
+            print('Connected to mumble!')
+        end
         return
     end
 
     -- Right girls, the socket lib seems to be fuck'd up perhaps it works like this for now
     -- We try to read. If the status code (Res) is 0 then we expect to see some data. 
-    -- However is Data length is 0 then something is wrong as the right status code would then be 10035 (no data available)
+    -- Whenever Data length is 0 then something is wrong as the right status code would then be 10035 (no data available)
 
     Data, Res = MumbleManager.MumbleSocket.Socket:Read(64)
     if Res ~= 10035 and Res ~= 0 then
-        MumbleManager.MumbleSocket:Connect()
+        if MumbleManager.MumbleSocket:Connect() then
+            print('Connected to mumble!')
+        end
         return
     end
 
     if Res == 0 and Data:len() == 0 then
         print('Connection aborted. Trying to connect again')
-        MumbleManager.MumbleSocket:Connect()
+        if MumbleManager.MumbleSocket:Connect() then
+            print('Connected to mumble!')
+        end
         return
     end
 
     if Data:len() > 0 then
-        EventType = string.byte(string.sub(Data, 1, 1))
-        EventMessage = string.sub(Data, 2)
-        MumbleManager:OnEvent(EventType, EventMessage:gsub('%W',''))
+        EventType = string.byte(Data:sub(0, 1))
+        EventMessage = Data:sub(1)
+        MumbleManager:OnEvent(EventType, EventMessage)
     end
 end
 
