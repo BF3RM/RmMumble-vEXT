@@ -19,6 +19,7 @@ function MumbleManager:InternalInit()
     self.STOP_TALKING = 121
     self.START_TALKING = 122
     self.GET_UUID_TYPE = 123
+    self.MUTE_AND_DEAF = 125
     
 -- These are the events that you should hook to
     self.LOCAL_TALKING = 0
@@ -47,22 +48,47 @@ function string.tohex(str)
 end
 --
 
+function MumbleManager:SetMuteAndDeaf(Mute, Deaf)
+    MuteByte = 0
+    DeafByte = 0
+    if Mute then MuteByte = 1 end
+    if Deaf then DeafByte = 1 end
+
+    Message = FunctionUtilities:RightPadding(string.format('%c%c%c', self.MUTE_AND_DEAF, MuteByte, DeafByte), 64, '\0')
+    self.MumbleSocket.Socket:Write(Message)
+end
+
 function MumbleManager:OnLocalTalking(Who, Begin)
-    state = 'started'
-    if Begin == false then state = 'stopped' end
-    print (Who .. ' ' .. state .. ' talking locally')
+--    state = 'started'
+    if Begin == false then 
+--        state = 'stopped' end
+        Events:Dispatch("Mumble:OnPlayerStopTalking", Who, 0)
+    else
+        Events:Dispatch("Mumble:OnPlayerStartTalking", Who, 0)
+    end
+    --print (Who .. ' ' .. state .. ' talking locally')
 end
 
 function MumbleManager:OnSquadTalking(Who, Begin)
-    state = 'started'
-    if Begin == false then state = 'stopped' end
-    print (Who .. ' ' .. state .. ' talking on squad voice')
+--    state = 'started'
+    if Begin == false then 
+    --        state = 'stopped' end
+        Events:Dispatch("Mumble:OnPlayerStopTalking", Who, 1)
+    else
+        Events:Dispatch("Mumble:OnPlayerStartTalking", Who, 1)
+    end
+    --print (Who .. ' ' .. state .. ' talking on squad voice')
 end
 
 function MumbleManager:OnSquadLeaderTalking(Who, Begin)
-    state = 'started'
-    if Begin == false then state = 'stopped' end
-    print (Who .. ' ' .. state .. ' talking on direct SL')
+--    state = 'started'
+    if Begin == false then 
+    --        state = 'stopped' end
+        Events:Dispatch("Mumble:OnPlayerStopTalking", Who, 2)
+    else
+        Events:Dispatch("Mumble:OnPlayerStartTalking", Who, 2)
+    end
+    --print (Who .. ' ' .. state .. ' talking on direct SL')
 end
 
 function MumbleManager:OnStartTalking(Message)
@@ -142,11 +168,9 @@ function MumbleManager:OnUuidRequested()
 end
 
 function MumbleManager:OnUuidReceived(Uuid)
-    if PlayerManager ~= nil and PlayerManager:GetLocalPlayer() ~= nil and PlayerManager:GetLocalPlayer().name ~= nil then
         print('Sending server\'s UUID to mumble (' .. Uuid .. ')')
         Message = FunctionUtilities:RightPadding(string.format('%c%s|%s', self.GET_UUID_TYPE, Uuid, PlayerManager:GetLocalPlayer().name:sub(0, 27)), 64, '\0')
         self.MumbleSocket.Socket:Write(Message)
-    end
 end
 
 local Instance = MumbleManager()

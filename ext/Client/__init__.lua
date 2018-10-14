@@ -1,3 +1,13 @@
+-- Available events:
+--  - Mumble:OnPlayerStartTalking (PlayerName, VoiceChannel)
+--  - Mumble:OnPlayerStopTalking (PlayerName, VoiceChannel)
+--  - Mumble:OnClientNotAvailable ()
+-- 
+-- Where VoiceChannel:
+--  - 0 == Local
+--  - 1 == Squad
+--  - 2 == Squad Leader Direct
+
 class 'MumbleImplementationClient'
 
 local MumbleManager = (require "Logic/Mumble/MumbleManager").GetInstance()
@@ -9,22 +19,25 @@ local ServerCheck = require "Logic/Mumble/TimedEvents/MumbleServerCheckEvent"
 
 function MumbleImplementationClient:__init()
 	print("Initializing MumbleImplementationClient")
-
-	MumbleManager:AddListener(MumbleManager.EVENT_MUMBLE_NOT_AVAILABLE, self, self.OnMumbleNotAvailable)
-	
-	MumbleTimerManager:AddEvent(PingEvent)
 	--MumbleTimerManager:AddEvent(SocketReceiver)
-	MumbleTimerManager:AddEvent(ServerCheck)
 
 	self:RegisterVars()
 	self:RegisterEvents()
 	SocketReceiver:__init()
+	
+	MumbleManager:AddListener(MumbleManager.EVENT_MUMBLE_NOT_AVAILABLE, self, self.OnMumbleNotAvailable)
+	
+	MumbleTimerManager:AddEvent(PingEvent)
+	MumbleTimerManager:AddEvent(ServerCheck)
 
 	self.InGame = false
+	self.KeyPressed = false
+	self.MuteAndDeaf = true
+	self.LevelLoaded = false
 end 
 
 function MumbleImplementationClient:OnMumbleNotAvailable()
-	print("Mumble not available (10 secs)!")
+	Events:Dispatch('Mumble:OnClientNotAvailable')
 end
 
 function MumbleImplementationClient:RegisterVars()
@@ -33,12 +46,14 @@ end
 
 
 function MumbleImplementationClient:RegisterEvents()
+	Hooks:Install("Input:PreUpdate", 999, self, self.OnPreUpdateInput)
+	Events:Subscribe("Client:LevelLoaded", self, self.OnJoining)
 	Events:Subscribe("Engine:Update", self, self.OnUpdate)
-	Events:Subscribe("Player:Connected", self, self.OnJoining)
+--	Events:Subscribe("Player:Joining", self, self.OnJoining)
 end
 
 function MumbleImplementationClient:OnJoining()
-	self.InGame = true
+	self.LevelLoaded = true
 end
 
 function MumbleImplementationClient:OnLoaded()
@@ -50,7 +65,20 @@ function MumbleImplementationClient:OnLoaded()
 
 end
 
+function MumbleImplementationClient:OnPreUpdateInput(p_Hook, p_Cache, p_DeltaTime)
+	if p_Cache[InputConceptIdentifiers.ConceptReload] > 0.0 and not self.KeyPressed then 
+		--MumbleManager:SetMuteAndDeaf(self.MuteAndDeaf, self.MuteAndDeaf)
+		self.MuteAndDeaf = not self.MuteAndDeaf
+		self.KeyPressed = true
+	elseif p_Cache[InputConceptIdentifiers.ConceptReload] == 0.0 and self.KeyPressed then
+		self.KeyPressed = false
+	end
+end
+
 function MumbleImplementationClient:OnUpdate(p_Delta, p_SimulationDelta)
+	if self.LevelLoaded and not self.InGame and PlayerManager:GetLocalPlayer() ~= nil then
+		self.InGame = true
+	end
 	if self.InGame then
 		MumbleManager:Update(p_Delta)
 		MumbleTimerManager:Update(p_Delta)

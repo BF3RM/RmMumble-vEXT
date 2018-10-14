@@ -4,24 +4,28 @@ local MumbleManager = (require "Logic/Mumble/MumbleManager").GetInstance()
 local FunctionUtilities = require 'Logic/Utilities/FunctionUtilities'
 
 function MumblePingEvent:__init()
-    self.Timeout = 5 -- Trigger this event every 5 seconds
+    self.Timeout = 1 -- Trigger this event every 5 seconds
     self.RunOnce = false -- Keep running
     
-    self.LastConnected = os.time(os.date("!*t"))
     self.Index = 0
     self.PING_EVENT_TYPE = 124
     self.FirstConnection = true
+    self.FirstPing = true
     MumbleManager:AddListener(self.PING_EVENT_TYPE, self, self.OnPing)
 end
 
 function MumblePingEvent:OnPing(Message)
-    if Message == 'Pong' then
+    if Message:gsub('%W','') == 'Pong' then
         self.LastConnected = os.time(os.date("!*t"))
     end
 end
 
-
 function MumblePingEvent:TriggerEvent()
+    if self.FirstPing then
+        self.LastConnected = os.time(os.date("!*t"))
+        self.FirstPing = false
+    end
+
     Message = FunctionUtilities:RightPadding(string.format('%c%s', self.PING_EVENT_TYPE, "Ping"), 64, '\0')
     NumOfBytes, Status = MumbleManager.MumbleSocket.Socket:Write(Message)
     if Status == 0 and self.FirstConnection then

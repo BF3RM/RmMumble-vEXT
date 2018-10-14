@@ -15,8 +15,9 @@ function MumbleSocketReceiverEvent:TriggerEvent()
     self.LastTrigger = os.time(os.date("!*t"))
 
     if MumbleManager.MumbleSocket.IsConnected ~= 0 and MumbleManager.MumbleSocket.IsConnected ~= 10035 and self.LastTrigger - self.LastConnect > 5 then
-        self.LastConnect = LastTrigger
-        if MumbleManager.MumbleSocket:Connect() then
+        MumbleManager.MumbleSocket.IsConnected = MumbleManager.MumbleSocket:Connect()
+        if MumbleManager.MumbleSocket.IsConnected == 0 then
+            self.LastConnect = LastTrigger
             print('Connected to mumble!')
         end
         return
@@ -28,7 +29,9 @@ function MumbleSocketReceiverEvent:TriggerEvent()
 
     Data, Res = MumbleManager.MumbleSocket.Socket:Read(64)
     if Res ~= 10035 and Res ~= 0 then
-        if MumbleManager.MumbleSocket:Connect() then
+        MumbleManager.MumbleSocket.IsConnected = MumbleManager.MumbleSocket:Connect()
+        if MumbleManager.MumbleSocket.IsConnected == 0 then
+            self.LastConnect = LastTrigger
             print('Connected to mumble!')
         end
         return
@@ -36,7 +39,9 @@ function MumbleSocketReceiverEvent:TriggerEvent()
 
     if Res == 0 and Data:len() == 0 then
         print('Connection aborted. Trying to connect again')
-        if MumbleManager.MumbleSocket:Connect() then
+        MumbleManager.MumbleSocket.IsConnected = MumbleManager.MumbleSocket:Connect()
+        if MumbleManager.MumbleSocket.IsConnected == 0 then
+            self.LastConnect = LastTrigger
             print('Connected to mumble!')
         end
         return
