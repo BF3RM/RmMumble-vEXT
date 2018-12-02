@@ -26,7 +26,8 @@ function MumblePingEvent:TriggerEvent()
         self.FirstPing = false
     end
 
-    Message = FunctionUtilities:RightPadding(string.format('%c%s', self.PING_EVENT_TYPE, "Ping"), 64, '\0')
+    Message = "Ping" -- Doesn't have 0x0 but gets appended by z 
+    Message = string.pack('<I4bz', (Message:len() + 2), self.PING_EVENT_TYPE, Message)
     NumOfBytes, Status = MumbleManager.MumbleSocket.Socket:Write(Message)
     if Status == 0 and self.FirstConnection then
         self.FirstConnection = false

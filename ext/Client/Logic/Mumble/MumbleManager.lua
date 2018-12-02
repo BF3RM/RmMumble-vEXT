@@ -169,7 +169,8 @@ end
 
 function MumbleManager:OnUuidReceived(Uuid)
         print('Sending server\'s UUID to mumble (' .. Uuid .. ')')
-        Message = FunctionUtilities:RightPadding(string.format('%c%s|%s', self.GET_UUID_TYPE, Uuid, PlayerManager:GetLocalPlayer().name:sub(0, 27)), 64, '\0')
+        uuidAndNick = Uuid .. '|' .. PlayerManager:GetLocalPlayer().name:sub(0, 27) -- Doesn't have 0x0 but gets appended by z 
+        Message = string.pack('<I4bz', (uuidAndNick:len() + 2), self.GET_UUID_TYPE, uuidAndNick)
         self.MumbleSocket.Socket:Write(Message)
 end
 

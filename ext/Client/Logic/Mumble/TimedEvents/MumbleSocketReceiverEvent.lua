@@ -11,6 +11,10 @@ function MumbleSocketReceiverEvent:__init()
     self.LastConnect = 0
 end
 
+function MumbleSocketReceiverEvent:GetDataSize(Data)
+    return string.unpack('<I4', Data)
+end
+
 function MumbleSocketReceiverEvent:TriggerEvent()
     self.LastTrigger = os.time(os.date("!*t"))
 
@@ -27,7 +31,7 @@ function MumbleSocketReceiverEvent:TriggerEvent()
     -- We try to read. If the status code (Res) is 0 then we expect to see some data. 
     -- Whenever Data length is 0 then something is wrong as the right status code would then be 10035 (no data available)
 
-    Data, Res = MumbleManager.MumbleSocket.Socket:Read(64)
+    Data, Res = MumbleManager.MumbleSocket.Socket:Read(4)
     if Res ~= 10035 and Res ~= 0 then
         MumbleManager.MumbleSocket.IsConnected = MumbleManager.MumbleSocket:Connect()
         if MumbleManager.MumbleSocket.IsConnected == 0 then
@@ -47,9 +51,18 @@ function MumbleSocketReceiverEvent:TriggerEvent()
         return
     end
 
-    if Data:len() > 0 then
-        EventType = string.byte(Data:sub(0, 1))
-        EventMessage = Data:sub(1)
+    if Data:len() == 4 then
+        Data, Res = MumbleManager.MumbleSocket.Socket:Read(self:GetDataSize(Data))
+        print (Data)
+        print (Data:len())
+        if Data:len() > 0 then
+            EventType = string.byte(Data:sub(0, 1))
+            print('received event ' .. tostring(EventType))
+        end
+        EventMessage = nil
+        if Data:len() > 1 then
+            EventMessage = Data:sub(2)
+        end
         MumbleManager:OnEvent(EventType, EventMessage)
     end
 end
