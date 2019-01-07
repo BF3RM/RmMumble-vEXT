@@ -14,7 +14,7 @@ function MumblePingEvent:__init()
     MumbleManager:AddListener(self.PING_EVENT_TYPE, self, self.OnPing)
 end
 
-function MumblePingEvent:OnPing(Message)
+function MumblePingEvent:OnPing(Message, Size)
     if Message:gsub('%W','') == 'Pong' then
         self.LastConnected = os.time(os.date("!*t"))
     end
@@ -27,7 +27,7 @@ function MumblePingEvent:TriggerEvent()
     end
 
     Message = "Ping" -- Doesn't have 0x0 but gets appended by z 
-    Message = string.pack('<I4bz', (Message:len() + 2), self.PING_EVENT_TYPE, Message)
+    Message = string.pack('<I4Bz', (Message:len() + 2), self.PING_EVENT_TYPE, Message)
     NumOfBytes, Status = MumbleManager.MumbleSocket.Socket:Write(Message)
     if Status == 0 and self.FirstConnection then
         self.FirstConnection = false

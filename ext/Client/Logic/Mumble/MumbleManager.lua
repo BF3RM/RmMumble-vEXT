@@ -16,6 +16,8 @@ function MumbleManager:InternalInit()
     self.EVENT_MUMBLE_NOT_CONNECTED = 'EMNC'
     self.EVENT_CANNOT_GET_SERVER_INFO = 'ECGSI'
 
+    self.IDENTITY_REQUEST = 119
+    self.UPDATE_CONTEXT = 120
     self.STOP_TALKING = 121
     self.START_TALKING = 122
     self.GET_UUID_TYPE = 123
@@ -28,8 +30,10 @@ function MumbleManager:InternalInit()
 --
 
     self.Listeners = {}
+    self.Player = nil
     self.MumbleSocket = require 'Logic/Mumble/MumbleSocket'
 
+    self:AddListener(self.IDENTITY_REQUEST, self, self.OnIdentityRequested)
     self:AddListener(self.GET_UUID_TYPE, self, self.OnUuidRequested)
     self:AddListener(self.START_TALKING, self, self.OnStartTalking)
     self:AddListener(self.STOP_TALKING, self, self.OnStopTalking)
@@ -38,6 +42,31 @@ function MumbleManager:InternalInit()
     self:AddListener(self.SQUAD_TALKING, self, self.OnSquadTalking)
     self:AddListener(self.SL_TALKING, self, self.OnSquadLeaderTalking)
     NetEvents:Subscribe('MumbleServerManager:OnServerUuid', self, self.OnUuidReceived)
+    NetEvents:Subscribe('MumbleServerManager:OnContextChange', self, self.OnContextChange)
+end
+
+function MumbleManager:OnIdentityRequested()
+    self.Player = PlayerManager:GetLocalPlayer()
+
+    Context = tostring(self.Player.TeamId) .. '~~' .. tostring(self.Player.SquadId) .. '~~' .. tostring(self.Player.isSquadLeader) -- Doesn't have 0x0 but gets appended by z 
+    print('Sending context to mumble ' .. Context)
+    Message = string.pack('<I4Bz', (Context:len() + 2), self.UPDATE_CONTEXT, Context)
+    self.MumbleSocket.Socket:Write(Message)
+end
+
+function MumbleManager:OnContextChange(p_SquadId, p_TeamId, p_IsSquadLeader)
+    p_SquadId = math.floor(p_SquadId)
+    p_TeamId = math.floor(p_TeamId)
+
+    IsSquadLeader = 0
+    if p_IsSquadLeader then
+        IsSquadLeader = 1
+    end
+
+    Context = tostring(p_TeamId) .. '~~' .. tostring(p_SquadId) .. '~~' .. tostring(IsSquadLeader) -- Doesn't have 0x0 but gets appended by z 
+    print('Sending context to mumble ' .. Context)
+    Message = string.pack('<I4Bz', (Context:len() + 2), self.UPDATE_CONTEXT, Context)
+    self.MumbleSocket.Socket:Write(Message)
 end
 
 -- Debug only
@@ -157,6 +186,7 @@ function MumbleManager:OnEvent(Event, ...)
 end
 
 function MumbleManager:Update(DeltaTime)
+    --self:OnContextChange()
     if math.floor((DeltaTime / 2)) * 2 == math.floor(DeltaTime) then
         --self:OnEvent(self.EVENT_TALKING)
     end
@@ -168,10 +198,10 @@ function MumbleManager:OnUuidRequested()
 end
 
 function MumbleManager:OnUuidReceived(Uuid)
-        print('Sending server\'s UUID to mumble (' .. Uuid .. ')')
-        uuidAndNick = Uuid .. '|' .. PlayerManager:GetLocalPlayer().name:sub(0, 27) -- Doesn't have 0x0 but gets appended by z 
-        Message = string.pack('<I4bz', (uuidAndNick:len() + 2), self.GET_UUID_TYPE, uuidAndNick)
-        self.MumbleSocket.Socket:Write(Message)
+    print('Sending server\'s UUID to mumble (' .. Uuid .. ')')
+    uuidAndNick = Uuid .. '|' .. PlayerManager:GetLocalPlayer().name:sub(0, 27) -- Doesn't have 0x0 but gets appended by z 
+    Message = string.pack('<I4Bz', (uuidAndNick:len() + 2), self.GET_UUID_TYPE, uuidAndNick)
+    self.MumbleSocket.Socket:Write(Message)
 end
 
 local Instance = MumbleManager()

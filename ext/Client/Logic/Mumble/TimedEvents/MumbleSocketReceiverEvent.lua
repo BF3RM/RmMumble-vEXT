@@ -53,17 +53,16 @@ function MumbleSocketReceiverEvent:TriggerEvent()
 
     if Data:len() == 4 then
         Data, Res = MumbleManager.MumbleSocket.Socket:Read(self:GetDataSize(Data))
-        print (Data)
-        print (Data:len())
         if Data:len() > 0 then
             EventType = string.byte(Data:sub(0, 1))
-            print('received event ' .. tostring(EventType))
         end
+
         EventMessage = nil
+        EventSize = Data:len() - 1
         if Data:len() > 1 then
             EventMessage = Data:sub(2)
         end
-        MumbleManager:OnEvent(EventType, EventMessage)
+        MumbleManager:OnEvent(EventType, EventMessage, EventSize)
     end
 end
 

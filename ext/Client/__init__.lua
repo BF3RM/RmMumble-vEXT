@@ -16,6 +16,7 @@ local MumbleTimerManager = require "Logic/Mumble/MumbleTimerManager"
 local PingEvent = require "Logic/Mumble/TimedEvents/MumblePingEvent"
 local SocketReceiver = require "Logic/Mumble/TimedEvents/MumbleSocketReceiverEvent"
 local ServerCheck = require "Logic/Mumble/TimedEvents/MumbleServerCheckEvent"
+local ThreeDLocation = require "Logic/Mumble/TimedEvents/Mumble3DLocationEvent"
 
 function MumbleImplementationClient:__init()
 	print("Initializing MumbleImplementationClient")
@@ -29,6 +30,7 @@ function MumbleImplementationClient:__init()
 	
 	MumbleTimerManager:AddEvent(PingEvent)
 	MumbleTimerManager:AddEvent(ServerCheck)
+	MumbleTimerManager:AddEvent(ThreeDLocation)
 
 	self.InGame = false
 	self.KeyPressed = false
@@ -66,13 +68,14 @@ function MumbleImplementationClient:OnLoaded()
 end
 
 function MumbleImplementationClient:OnPreUpdateInput(p_Hook, p_Cache, p_DeltaTime)
-	if p_Cache[InputConceptIdentifiers.ConceptReload] > 0.0 and not self.KeyPressed then 
+	--[[if p_Cache[InputConceptIdentifiers.ConceptReload] > 0.0 and not self.KeyPressed then 
 		--MumbleManager:SetMuteAndDeaf(self.MuteAndDeaf, self.MuteAndDeaf)
 		self.MuteAndDeaf = not self.MuteAndDeaf
 		self.KeyPressed = true
 	elseif p_Cache[InputConceptIdentifiers.ConceptReload] == 0.0 and self.KeyPressed then
 		self.KeyPressed = false
 	end
+	]]
 end
 
 function MumbleImplementationClient:OnUpdate(p_Delta, p_SimulationDelta)
