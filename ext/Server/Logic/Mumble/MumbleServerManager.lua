@@ -15,11 +15,11 @@ function MumbleServerManager:OnRequestServerUuid(player)
     NetEvents:SendTo('MumbleServerManager:OnServerUuid', player, tostring(RCON:GetServerGUID()))
 end
 function MumbleServerManager:SquadChange(p_Player, p_SquadID)
-    NetEvents:BroadcastLocal('MumbleServerManager:OnContextChange', p_Player.squadID, p_Player.teamID, p_Player.isSquadLeader)
+    NetEvents:SendTo('MumbleServerManager:OnContextChange', p_Player, p_Player.squadID, p_Player.teamID, p_Player.isSquadLeader)
 end
 
 function MumbleServerManager:TeamChange(p_Player, p_TeamID, p_SquadID)
-    NetEvents:BroadcastLocal('MumbleServerManager:OnContextChange', p_Player.squadID, p_Player.teamID, p_Player.isSquadLeader)
+    NetEvents:SendTo('MumbleServerManager:OnContextChange', p_Player, p_Player.squadID, p_Player.teamID, p_Player.isSquadLeader)
 end
 
 function MumbleServerManager:OnEngineMessage(p_Message)
