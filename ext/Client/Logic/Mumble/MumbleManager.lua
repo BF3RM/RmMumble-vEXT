@@ -16,6 +16,7 @@ function MumbleManager:InternalInit()
     self.EVENT_MUMBLE_NOT_CONNECTED = 'EMNC'
     self.EVENT_CANNOT_GET_SERVER_INFO = 'ECGSI'
 
+    self.SHUTDOWN = 118
     self.IDENTITY_REQUEST = 119
     self.UPDATE_CONTEXT = 120
     self.STOP_TALKING = 121
@@ -43,30 +44,44 @@ function MumbleManager:InternalInit()
     self:AddListener(self.SL_TALKING, self, self.OnSquadLeaderTalking)
     NetEvents:Subscribe('MumbleServerManager:OnServerUuid', self, self.OnUuidReceived)
     NetEvents:Subscribe('MumbleServerManager:OnContextChange', self, self.OnContextChange)
+    Events:Subscribe('ExtensionUnloading', self, self.OnExtensionUnloading)
+end
+
+function MumbleManager:OnExtensionUnloading(Player)
+    if self.MumbleSocket and self.MumbleSocket.Socket then
+        print ('MumbleManager:OnExtensionUnloading: Sending goodbye to mumble')
+        self.MumbleSocket.Socket:Write(string.pack('<I4B', 1, self.SHUTDOWN))
+        self.MumbleSocket.Socket:Destroy()
+    else
+        print ('MumbleManager:OnExtensionUnloading: Socket or Socket Manager not alive at this point')
+    end
 end
 
 function MumbleManager:OnIdentityRequested()
-    self.Player = PlayerManager:GetLocalPlayer()
-
-    Context = tostring(self.Player.TeamId) .. '~~' .. tostring(self.Player.SquadId) .. '~~' .. tostring(self.Player.isSquadLeader) -- Doesn't have 0x0 but gets appended by z 
-    print('Sending context to mumble ' .. Context)
-    Message = string.pack('<I4Bz', (Context:len() + 2), self.UPDATE_CONTEXT, Context)
+    print('Identity Requested')
+    print('Sending cached context to mumble ' .. Context)
+    Message = string.pack('<I4Bz', (self.Context:len() + 2), self.UPDATE_CONTEXT, self.Context)
     self.MumbleSocket.Socket:Write(Message)
 end
 
-function MumbleManager:OnContextChange(p_SquadId, p_TeamId, p_IsSquadLeader)
-    p_SquadId = math.floor(p_SquadId)
-    p_TeamId = math.floor(p_TeamId)
+function MumbleManager:OnContextChange(SquadId, TeamId, IsSquadLeader)
+    SquadId = math.floor(SquadId)
+    TeamId = math.floor(TeamId)
 
-    IsSquadLeader = 0
-    if p_IsSquadLeader then
-        IsSquadLeader = 1
+    IsSquadLeaderBool = 0
+    if IsSquadLeader then
+        IsSquadLeaderBool = 1
     end
 
-    Context = tostring(p_TeamId) .. '~~' .. tostring(p_SquadId) .. '~~' .. tostring(IsSquadLeader) -- Doesn't have 0x0 but gets appended by z 
+    if SquadId == nil or TeamId == nil then
+        return
+    end
+
+    Context = tostring(TeamId) .. '~~' .. tostring(SquadId) .. '~~' .. tostring(IsSquadLeaderBool) -- Doesn't have 0x0 but gets appended by z 
     print('Sending context to mumble ' .. Context)
     Message = string.pack('<I4Bz', (Context:len() + 2), self.UPDATE_CONTEXT, Context)
     self.MumbleSocket.Socket:Write(Message)
+    self.Context = Context
 end
 
 -- Debug only
