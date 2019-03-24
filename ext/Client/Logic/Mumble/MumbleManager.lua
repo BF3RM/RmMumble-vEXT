@@ -44,7 +44,7 @@ function MumbleManager:InternalInit()
     self:AddListener(self.SL_TALKING, self, self.OnSquadLeaderTalking)
     NetEvents:Subscribe('MumbleServerManager:OnServerUuid', self, self.OnUuidReceived)
     NetEvents:Subscribe('MumbleServerManager:OnContextChange', self, self.OnContextChange)
-    Events:Subscribe('ExtensionUnloading', self, self.OnExtensionUnloading)
+    Events:Subscribe('Extension:Unloading', self, self.OnExtensionUnloading)
 end
 
 function MumbleManager:OnExtensionUnloading(Player)
