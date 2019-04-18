@@ -10,27 +10,30 @@
 
 class 'MumbleImplementationClient'
 
-local MumbleManager = (require "Logic/Mumble/MumbleManager").GetInstance()
-local MumbleTimerManager = require "Logic/Mumble/MumbleTimerManager"
+require "__shared/GlobalVars"
 
-local PingEvent = require "Logic/Mumble/TimedEvents/MumblePingEvent"
-local SocketReceiver = require "Logic/Mumble/TimedEvents/MumbleSocketReceiverEvent"
-local ServerCheck = require "Logic/Mumble/TimedEvents/MumbleServerCheckEvent"
-local ThreeDLocation = require "Logic/Mumble/TimedEvents/Mumble3DLocationEvent"
+local MumbleManager = (require "Logic/Mumble/MumbleManager").GetInstance()
+local MumbleEventManager = require "Logic/Mumble/MumbleEventManager"
+
+local MumblePingEvent = require "Logic/Mumble/TimedEvents/MumblePingEvent"
+local MumbleServerCheckEvent = require "Logic/Mumble/TimedEvents/MumbleServerCheckEvent"
+local MainMumbleSocketEvent = require "Logic/Mumble/TimedEvents/MainMumbleSocketEvent"
+local ThreeDMumbleSocketEvent = require "Logic/Mumble/TimedEvents/ThreeDMumbleSocketEvent"
 
 function MumbleImplementationClient:__init()
 	print("Initializing MumbleImplementationClient")
-	--MumbleTimerManager:AddEvent(SocketReceiver)
+	--MumbleEventManager:AddEvent(MainMumbleSocketEvent)
 
 	self:RegisterVars()
 	self:RegisterEvents()
-	SocketReceiver:__init()
+	-- MainMumbleSocketEvent:__init()
 	
 	MumbleManager:AddListener(MumbleManager.EVENT_MUMBLE_NOT_AVAILABLE, self, self.OnMumbleNotAvailable)
 	
-	MumbleTimerManager:AddEvent(PingEvent)
-	MumbleTimerManager:AddEvent(ServerCheck)
-	MumbleTimerManager:AddEvent(ThreeDLocation)
+	MumbleEventManager:AddEvent(MainMumbleSocketEvent)
+	MumbleEventManager:AddEvent(MumblePingEvent)
+	MumbleEventManager:AddEvent(MumbleServerCheckEvent)
+	MumbleEventManager:AddEvent(ThreeDMumbleSocketEvent)
 
 	self.InGame = false
 	self.KeyPressed = false
@@ -84,8 +87,8 @@ function MumbleImplementationClient:OnUpdate(p_Delta, p_SimulationDelta)
 	end
 	if self.InGame then
 		MumbleManager:Update(p_Delta)
-		MumbleTimerManager:Update(p_Delta)
-		SocketReceiver:TriggerEvent() -- Let's trigger it manually at each tick for now
+		MumbleEventManager:Update(p_Delta)
+		MainMumbleSocketEvent:TriggerEvent() -- Let's trigger it manually at each tick for now
 	end
 end
 

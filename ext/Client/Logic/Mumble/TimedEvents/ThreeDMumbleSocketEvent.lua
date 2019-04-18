@@ -1,35 +1,19 @@
-class "Mumble3DLocationEvent" 
+class "ThreeDMumbleSocketEvent" 
 
 local MumbleManager = (require "Logic/Mumble/MumbleManager").GetInstance()
 local FunctionUtilities = require 'Logic/Utilities/FunctionUtilities'
 
-function Mumble3DLocationEvent:__init()
-    self.Timeout = 0.2 -- Trigger this event every 5 seconds
+function ThreeDMumbleSocketEvent:__init()
+    self.Timeout = 0.2 -- Trigger this event every 200ms
     self.RunOnce = false -- Keep running
     
-    self.Index = 0
-    self.PING_EVENT_TYPE = 124
     self.FirstConnection = true
-    self.IsConnected = false
-    MumbleManager:AddListener(self.PING_EVENT_TYPE, self, self.OnPing)
+    -- MumbleManager:AddListener(self.PING_EVENT_TYPE, self, self.OnPing)
 end
 
-function Mumble3DLocationEvent:Connect()
-    if self.Socket ~= nil then
-        self.Socket:Destroy()
-        self.Socket = nil
-    end
-    
-    self.Socket = Net:Socket(NetSocketFamily.INET, NetSocketType.Datagram)
-    self.IsConnected = self.Socket:Connect('127.0.0.1', 55778)
-    
-    return self.IsConnected
-end
-
-function Mumble3DLocationEvent:TriggerEvent()
-    if self.IsConnected ~= 0 then
-        self:Connect()
-        return
+function ThreeDMumbleSocketEvent:TriggerEvent()
+    if MumbleManager.ThreeDMumbleSocket.ConnectionStatus ~= SocketConnectionStatus.Success then
+        MumbleManager.ThreeDMumbleSocket:Connect()
     end
 
     local Player = PlayerManager:GetLocalPlayer()
@@ -39,8 +23,9 @@ function Mumble3DLocationEvent:TriggerEvent()
         front = transform.forward
         up = transform.up
 
+        -- this happens 5 times per seconds, so keep it tiny
         Message = string.pack('<fffffffff', -position.x, position.y, position.z, -front.x, front.y, front.z, -up.x, up.y, up.z)
-        self.Socket:Write(Message)
+        MumbleManager.ThreeDMumbleSocket.Socket:Write(Message)
     end
     --[[
     Message = "Ping" -- Doesn't have 0x0 but gets appended by z 
@@ -63,5 +48,5 @@ function Mumble3DLocationEvent:TriggerEvent()
     ]]
 end
 
-Instance = Mumble3DLocationEvent()
+Instance = ThreeDMumbleSocketEvent()
 return Instance

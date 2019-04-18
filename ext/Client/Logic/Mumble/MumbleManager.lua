@@ -1,6 +1,7 @@
 class "MumbleManager"
 
 local FunctionUtilities = require 'Logic/Utilities/FunctionUtilities'
+local MumbleSocket = require 'Logic/Mumble/MumbleSocket'
 
 local MetaTable = { __index = nil }
 
@@ -23,6 +24,9 @@ function MumbleManager:InternalInit()
     self.START_TALKING = 122
     self.GET_UUID_TYPE = 123
     self.MUTE_AND_DEAF = 125
+
+    self.MAIN_MUMBLE_SOCKET_PORT = 64304
+    self.THREE_D_MUMBLE_SOCKET_PORT = 55778
     
 -- These are the events that you should hook to
     self.LOCAL_TALKING = 0
@@ -32,7 +36,8 @@ function MumbleManager:InternalInit()
 
     self.Listeners = {}
     self.Player = nil
-    self.MumbleSocket = require 'Logic/Mumble/MumbleSocket'
+    self.MainMumbleSocket = MumbleSocket("MainSocket", NetSocketFamily.INET, NetSocketType.Stream, self.MAIN_MUMBLE_SOCKET_PORT)
+    self.ThreeDMumbleSocket = MumbleSocket("ThreeDSocket", NetSocketFamily.INET, NetSocketType.Datagram, self.THREE_D_MUMBLE_SOCKET_PORT)
 
     self:AddListener(self.IDENTITY_REQUEST, self, self.OnIdentityRequested)
     self:AddListener(self.GET_UUID_TYPE, self, self.OnUuidRequested)
@@ -48,12 +53,19 @@ function MumbleManager:InternalInit()
 end
 
 function MumbleManager:OnExtensionUnloading(Player)
-    if self.MumbleSocket and self.MumbleSocket.Socket then
-        print ('MumbleManager:OnExtensionUnloading: Sending goodbye to mumble')
-        self.MumbleSocket.Socket:Write(string.pack('<I4B', 1, self.SHUTDOWN))
-        self.MumbleSocket.Socket:Destroy()
+    if self.MainMumbleSocket and self.MainMumbleSocket.Socket then
+        print ('MumbleManager:OnExtensionUnloading: Destroying Main Socket')
+        self.MainMumbleSocket.Socket:Write(string.pack('<I4B', 1, self.SHUTDOWN))
+        self.MainMumbleSocket.Socket:Destroy()
     else
-        print ('MumbleManager:OnExtensionUnloading: Socket or Socket Manager not alive at this point')
+        error('MumbleManager:OnExtensionUnloading: Socket or Socket Manager not alive at this point')
+    end
+
+    if self.ThreeDMumbleSocket and self.ThreeDMumbleSocket.Socket then
+        print ('MumbleManager:OnExtensionUnloading: Destroying 3D Pos Socket')
+        self.ThreeDMumbleSocket.Socket:Destroy()
+    else
+        error('MumbleManager:OnExtensionUnloading: Socket or Socket Manager not alive at this point')
     end
 end
 
@@ -61,7 +73,7 @@ function MumbleManager:OnIdentityRequested()
     print('Identity Requested')
     print('Sending cached context to mumble ' .. Context)
     Message = string.pack('<I4Bz', (self.Context:len() + 2), self.UPDATE_CONTEXT, self.Context)
-    self.MumbleSocket.Socket:Write(Message)
+    self.MainMumbleSocket.Socket:Write(Message)
 end
 
 function MumbleManager:OnContextChange(SquadId, TeamId, IsSquadLeader)
@@ -80,7 +92,7 @@ function MumbleManager:OnContextChange(SquadId, TeamId, IsSquadLeader)
     Context = tostring(TeamId) .. '~~' .. tostring(SquadId) .. '~~' .. tostring(IsSquadLeaderBool) -- Doesn't have 0x0 but gets appended by z 
     print('Sending context to mumble ' .. Context)
     Message = string.pack('<I4Bz', (Context:len() + 2), self.UPDATE_CONTEXT, Context)
-    self.MumbleSocket.Socket:Write(Message)
+    self.MainMumbleSocket.Socket:Write(Message)
     self.Context = Context
 end
 
@@ -99,15 +111,17 @@ function MumbleManager:SetMuteAndDeaf(Mute, Deaf)
     if Deaf then DeafByte = 1 end
 
     Message = FunctionUtilities:RightPadding(string.format('%c%c%c', self.MUTE_AND_DEAF, MuteByte, DeafByte), 64, '\0')
-    self.MumbleSocket.Socket:Write(Message)
+    self.MainMumbleSocket.Socket:Write(Message)
 end
 
 function MumbleManager:OnLocalTalking(Who, Begin)
 --    state = 'started'
     if Begin == false then 
 --        state = 'stopped' end
+        print("player " .. Who.name .. " stopped talking on local")
         Events:Dispatch("Mumble:OnPlayerStopTalking", Who, 0)
     else
+        print("player " .. Who.name .. " started talking on local")
         Events:Dispatch("Mumble:OnPlayerStartTalking", Who, 0)
     end
     --print (Who .. ' ' .. state .. ' talking locally')
@@ -117,8 +131,10 @@ function MumbleManager:OnSquadTalking(Who, Begin)
 --    state = 'started'
     if Begin == false then 
     --        state = 'stopped' end
+        print("player " .. Who.name .. " stopped talking on squad")
         Events:Dispatch("Mumble:OnPlayerStopTalking", Who, 1)
     else
+        print("player " .. Who.name .. " started talking on squad")
         Events:Dispatch("Mumble:OnPlayerStartTalking", Who, 1)
     end
     --print (Who .. ' ' .. state .. ' talking on squad voice')
@@ -128,8 +144,10 @@ function MumbleManager:OnSquadLeaderTalking(Who, Begin)
 --    state = 'started'
     if Begin == false then 
     --        state = 'stopped' end
+        print("player " .. Who.name .. " stopped talking on SL comms")
         Events:Dispatch("Mumble:OnPlayerStopTalking", Who, 2)
     else
+        print("player " .. Who.name .. " started talking on SL comms")
         Events:Dispatch("Mumble:OnPlayerStartTalking", Who, 2)
     end
     --print (Who .. ' ' .. state .. ' talking on direct SL')
@@ -148,6 +166,7 @@ function MumbleManager:OnStartTalking(Message)
         Event = self.SL_TALKING
     end
 
+    print("MumbleManager:OnStartTalking")
     self:OnEvent(Event, Who, true)
 end
 
@@ -164,6 +183,7 @@ function MumbleManager:OnStopTalking(Message)
         Event = self.SL_TALKING
     end
 
+    print("MumbleManager:OnStopTalking")
     self:OnEvent(Event, Who, false)
 end
 
@@ -189,7 +209,7 @@ function MumbleManager:AddListener(Event, Instance, Callback)
         self.Listeners[Event] = self.Listeners[Event] or {}
         table.insert(self.Listeners[Event], {Instance=Instance, Callback=Callback})
     else
-        print("MumbleManager::AddListener: The passed argument is not a valid function")
+        error("MumbleManager:AddListener: The passed argument is not a valid function")
     end
 end
 
@@ -216,7 +236,7 @@ function MumbleManager:OnUuidReceived(Uuid)
     print('Sending server\'s UUID to mumble (' .. Uuid .. ')')
     uuidAndNick = Uuid .. '|' .. PlayerManager:GetLocalPlayer().name:sub(0, 27) -- Doesn't have 0x0 but gets appended by z 
     Message = string.pack('<I4Bz', (uuidAndNick:len() + 2), self.GET_UUID_TYPE, uuidAndNick)
-    self.MumbleSocket.Socket:Write(Message)
+    self.MainMumbleSocket.Socket:Write(Message)
 end
 
 local Instance = MumbleManager()
