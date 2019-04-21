@@ -42,25 +42,6 @@ function Mumble3DLocationEvent:TriggerEvent()
         Message = string.pack('<fffffffff', -position.x, position.y, position.z, -front.x, front.y, front.z, -up.x, up.y, up.z)
         self.Socket:Write(Message)
     end
-    --[[
-    Message = "Ping" -- Doesn't have 0x0 but gets appended by z 
-    Message = string.pack('<I4Bz', (Message:len() + 2), self.PING_EVENT_TYPE, Message)
-    NumOfBytes, Status = MumbleManager.MumbleSocket.Socket:Write(Message)
-    if Status == 0 and self.FirstConnection then
-        self.FirstConnection = false
-     --   MumbleManager:OnUuidRequested()
-    end
-
-    if Status ~= 0 then
-        self.FirstConnection = true
-    end
-
-    if os.time(os.date("!*t")) - self.LastConnected > 10 then
-        self.LastConnected = os.time(os.date("!*t"))
-        MumbleManager:OnEvent(MumbleManager.EVENT_MUMBLE_NOT_AVAILABLE)
-    end
-
-    ]]
 end
 
 Instance = Mumble3DLocationEvent()

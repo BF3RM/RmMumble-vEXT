@@ -15,10 +15,16 @@ function MumbleServerManager:OnRequestServerUuid(player)
     NetEvents:SendTo('MumbleServerManager:OnServerUuid', player, tostring(RCON:GetServerGUID()))
 end
 function MumbleServerManager:SquadChange(p_Player, p_SquadID)
+    if p_Player == nil then
+        return
+    end
     NetEvents:SendTo('MumbleServerManager:OnContextChange', p_Player, p_Player.squadID, p_Player.teamID, p_Player.isSquadLeader)
 end
 
 function MumbleServerManager:TeamChange(p_Player, p_TeamID, p_SquadID)
+    if p_Player == nil then
+        return
+    end
     NetEvents:SendTo('MumbleServerManager:OnContextChange', p_Player, p_Player.squadID, p_Player.teamID, p_Player.isSquadLeader)
 end
 
