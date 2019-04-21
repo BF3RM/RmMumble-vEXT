@@ -28,9 +28,12 @@ function MumbleImplementationClient:__init()
 	self:RegisterEvents()
 	-- MainMumbleSocketEvent:__init()
 	
+	_G.IsMumbleAvailable = false
+
+	MumbleManager:AddListener(MumbleManager.EVENT_MUMBLE_AVAILABLE, self, self.OnMumbleAvailable)
 	MumbleManager:AddListener(MumbleManager.EVENT_MUMBLE_NOT_AVAILABLE, self, self.OnMumbleNotAvailable)
 	
-	MumbleEventManager:AddEvent(MainMumbleSocketEvent)
+	-- MumbleEventManager:AddEvent(MainMumbleSocketEvent)
 	MumbleEventManager:AddEvent(MumblePingEvent)
 	MumbleEventManager:AddEvent(MumbleServerCheckEvent)
 	MumbleEventManager:AddEvent(ThreeDMumbleSocketEvent)
@@ -41,7 +44,13 @@ function MumbleImplementationClient:__init()
 	self.LevelLoaded = false
 end
 
+function MumbleImplementationClient:OnMumbleAvailable()
+	_G.IsMumbleAvailable = true
+	Events:Dispatch('Mumble:OnClientAvailable')
+end
+
 function MumbleImplementationClient:OnMumbleNotAvailable()
+	_G.IsMumbleAvailable = false
 	Events:Dispatch('Mumble:OnClientNotAvailable')
 end
 
@@ -88,7 +97,7 @@ function MumbleImplementationClient:OnUpdate(p_Delta, p_SimulationDelta)
 	if self.InGame then
 		MumbleManager:Update(p_Delta)
 		MumbleEventManager:Update(p_Delta)
-		MainMumbleSocketEvent:TriggerEvent() -- Let's trigger it manually at each tick for now
+		-- MainMumbleSocketEvent:TriggerEvent() -- Let's trigger it manually at each tick for now
 	end
 end
 

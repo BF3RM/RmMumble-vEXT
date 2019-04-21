@@ -12,5 +12,4 @@ function MumbleServerCheckEvent:TriggerEvent()
 --   MumbleManager:OnUuidRequested()
 end
 
-Instance = MumbleServerCheckEvent()
-return Instance
+return MumbleServerCheckEvent()

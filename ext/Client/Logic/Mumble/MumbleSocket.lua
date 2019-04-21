@@ -20,6 +20,13 @@ function MumbleSocket:Connect()
     self.Socket = Net:Socket(self.NetSocketFamily, self.NetSocketType)
     self.ConnectionStatus = self.Socket:Connect(Constants.LocalHostIP, self.SocketPort)
     print("Connecting to socket " .. self.SocketName .. " at localhost:" .. tostring(self.SocketPort))
+    if self.ConnectionStatus == SocketConnectionStatus.Success then
+        print("Successfully established a connection to socket " .. self.SocketName)
+    elseif self.ConnectionStatus == SocketConnectionStatus.Unavailable then
+        print("Connection to socket " .. self.SocketName .. " failed, socket unavailable.")
+    else
+        error("Unknown socket error: " .. self.ConnectionStatus)
+    end
 end
 
 function MumbleSocket:Update(Delta)

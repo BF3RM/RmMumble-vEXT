@@ -13,6 +13,7 @@ end
 function MumbleManager:InternalInit()
     self:RegisterEvents()
     self.EVENT_TALKING = 'ET'
+    self.EVENT_MUMBLE_AVAILABLE = 'EMA'
     self.EVENT_MUMBLE_NOT_AVAILABLE = 'EMNA'
     self.EVENT_MUMBLE_NOT_CONNECTED = 'EMNC'
     self.EVENT_CANNOT_GET_SERVER_INFO = 'ECGSI'
@@ -38,6 +39,9 @@ function MumbleManager:InternalInit()
     self.Player = nil
     self.MainMumbleSocket = MumbleSocket("MainSocket", NetSocketFamily.INET, NetSocketType.Stream, self.MAIN_MUMBLE_SOCKET_PORT)
     self.ThreeDMumbleSocket = MumbleSocket("ThreeDSocket", NetSocketFamily.INET, NetSocketType.Datagram, self.THREE_D_MUMBLE_SOCKET_PORT)
+
+    -- self.MainMumbleSocket:Connect()
+    -- self.ThreeDMumbleSocket:Connect()
 
     self:AddListener(self.IDENTITY_REQUEST, self, self.OnIdentityRequested)
     self:AddListener(self.GET_UUID_TYPE, self, self.OnUuidRequested)
@@ -77,11 +81,11 @@ function MumbleManager:OnIdentityRequested()
     self.MainMumbleSocket.Socket:Write(s_Message)
 end
 
-function MumbleServerManager:OnSquadChange(p_Player, p_SquadID)
+function MumbleManager:OnSquadChange(p_Player, p_SquadID)
     self:OnContextChange(p_Player.squadID, p_Player.teamID, p_Player.isSquadLeader)
 end
 
-function MumbleServerManager:OnTeamChange(p_Player, p_TeamID, p_SquadID)
+function MumbleManager:OnTeamChange(p_Player, p_TeamID, p_SquadID)
     self:OnContextChange(p_Player.squadID, p_Player.teamID, p_Player.isSquadLeader)
 end
 

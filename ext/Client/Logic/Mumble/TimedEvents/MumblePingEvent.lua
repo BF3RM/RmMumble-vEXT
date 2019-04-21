@@ -1,10 +1,10 @@
-class "MumblePingEvent" 
+class "MumblePingEvent"
 
 local MumbleManager = (require "Logic/Mumble/MumbleManager").GetInstance()
 local FunctionUtilities = require 'Logic/Utilities/FunctionUtilities'
 
 function MumblePingEvent:__init()
-    self.Timeout = 1 -- Trigger this event every second
+    self.Timeout = 3 -- Trigger this event every second
     self.RunOnce = false -- Keep running
     
     self.PING_EVENT_TYPE = 124
@@ -16,7 +16,7 @@ end
 function MumblePingEvent:OnPing(Message, Size)
     if Message:gsub('%W','') == 'Pong' then
         self.LastConnected = os.time(os.date("!*t"))
-        MumbleManager:OnEvent(MumbleManager.EVENT_MUMBLE_NOT_AVAILABLE)
+        -- MumbleManager:OnEvent(MumbleManager.EVENT_MUMBLE_NOT_AVAILABLE)
     end
 end
 
@@ -26,11 +26,14 @@ function MumblePingEvent:TriggerEvent()
         self.FirstPing = false
     end
 
-    Message = "Ping" -- Doesn't have 0x0 but gets appended by z 
+    print("ping")
+
+    local Message = "Ping" -- Doesn't have 0x0 but gets appended by z
     Message = string.pack('<I4Bz', (Message:len() + 2), self.PING_EVENT_TYPE, Message)
-    NumOfBytes, Status = MumbleManager.MainMumbleSocket.Socket:Write(Message)
+    local NumOfBytes, Status = MumbleManager.MainMumbleSocket.Socket:Write(Message)
     if Status == SocketConnectionStatus.Success and self.FirstConnection then
         self.FirstConnection = false
+        MumbleManager:OnEvent(MumbleManager.EVENT_MUMBLE_AVAILABLE)
         --   MumbleManager:OnUuidRequested()
     end
 
