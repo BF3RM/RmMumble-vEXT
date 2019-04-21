@@ -9,7 +9,7 @@ end
 
 function MumbleEventManager:Update(deltaTime)
     if self.Time > 999999999 then
-        for index, event in pairs(self.Events) do
+        for _, event in pairs(self.Events) do
             event.LastRun = event.Timeout - self.Time - self.LastRun
         end
         self.Time = 0

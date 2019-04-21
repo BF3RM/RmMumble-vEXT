@@ -39,7 +39,7 @@ function MumbleImplementationClient:__init()
 	self.KeyPressed = false
 	self.MuteAndDeaf = true
 	self.LevelLoaded = false
-end 
+end
 
 function MumbleImplementationClient:OnMumbleNotAvailable()
 	Events:Dispatch('Mumble:OnClientNotAvailable')
@@ -92,5 +92,5 @@ function MumbleImplementationClient:OnUpdate(p_Delta, p_SimulationDelta)
 	end
 end
 
-g_MumbleImplementationClient = MumbleImplementationClient()
+return MumbleImplementationClient()
 

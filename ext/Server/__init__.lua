@@ -16,5 +16,5 @@ end
 function MumbleImplementationServer:RegisterEvents()
 end
 
-g_MumbleImplementationServer = MumbleImplementationServer()
+return MumbleImplementationServer()
 

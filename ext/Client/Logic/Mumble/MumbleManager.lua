@@ -48,7 +48,8 @@ function MumbleManager:InternalInit()
     self:AddListener(self.SQUAD_TALKING, self, self.OnSquadTalking)
     self:AddListener(self.SL_TALKING, self, self.OnSquadLeaderTalking)
     NetEvents:Subscribe('MumbleServerManager:OnServerUuid', self, self.OnUuidReceived)
-    NetEvents:Subscribe('MumbleServerManager:OnContextChange', self, self.OnContextChange)
+    Events:Subscribe('Player:SquadChange', self, self.OnSquadChange)
+    Events:Subscribe('Player:TeamChange', self, self.OnTeamChange)
     Events:Subscribe('Extension:Unloading', self, self.OnExtensionUnloading)
 end
 
@@ -71,52 +72,53 @@ end
 
 function MumbleManager:OnIdentityRequested()
     print('Identity Requested')
-    print('Sending cached context to mumble ' .. Context)
-    Message = string.pack('<I4Bz', (self.Context:len() + 2), self.UPDATE_CONTEXT, self.Context)
-    self.MainMumbleSocket.Socket:Write(Message)
+    print('Sending cached context to mumble ' .. self.Context)
+    local s_Message = string.pack('<I4Bz', (self.Context:len() + 2), self.UPDATE_CONTEXT, self.Context)
+    self.MainMumbleSocket.Socket:Write(s_Message)
+end
+
+function MumbleServerManager:OnSquadChange(p_Player, p_SquadID)
+    self:OnContextChange(p_Player.squadID, p_Player.teamID, p_Player.isSquadLeader)
+end
+
+function MumbleServerManager:OnTeamChange(p_Player, p_TeamID, p_SquadID)
+    self:OnContextChange(p_Player.squadID, p_Player.teamID, p_Player.isSquadLeader)
 end
 
 function MumbleManager:OnContextChange(SquadId, TeamId, IsSquadLeader)
     SquadId = math.floor(SquadId)
     TeamId = math.floor(TeamId)
 
-    IsSquadLeaderBool = 0
+    local s_IsSquadLeaderBool = 0
+
     if IsSquadLeader then
-        IsSquadLeaderBool = 1
+        s_IsSquadLeaderBool = 1
     end
 
     if SquadId == nil or TeamId == nil then
         return
     end
 
-    Context = tostring(TeamId) .. '~~' .. tostring(SquadId) .. '~~' .. tostring(IsSquadLeaderBool) -- Doesn't have 0x0 but gets appended by z 
-    print('Sending context to mumble ' .. Context)
-    Message = string.pack('<I4Bz', (Context:len() + 2), self.UPDATE_CONTEXT, Context)
-    self.MainMumbleSocket.Socket:Write(Message)
-    self.Context = Context
+    local s_Context = tostring(TeamId) .. '~~' .. tostring(SquadId) .. '~~' .. tostring(s_IsSquadLeaderBool) -- Doesn't have 0x0 but gets appended by z 
+    print('Sending context to mumble ' .. s_Context)
+    local s_Message = string.pack('<I4Bz', (s_Context:len() + 2), self.UPDATE_CONTEXT, s_Context)
+    self.MainMumbleSocket.Socket:Write(s_Message)
+    self.Context = s_Context
 end
-
--- Debug only
-function string.tohex(str)
-    return (str:gsub('.', function (c)
-        return string.format('%02X', string.byte(c))
-    end))
-end
---
 
 function MumbleManager:SetMuteAndDeaf(Mute, Deaf)
-    MuteByte = 0
-    DeafByte = 0
+    local MuteByte = 0
+    local DeafByte = 0
     if Mute then MuteByte = 1 end
     if Deaf then DeafByte = 1 end
 
-    Message = FunctionUtilities:RightPadding(string.format('%c%c%c', self.MUTE_AND_DEAF, MuteByte, DeafByte), 64, '\0')
+    local Message = FunctionUtilities:RightPadding(string.format('%c%c%c', self.MUTE_AND_DEAF, MuteByte, DeafByte), 64, '\0')
     self.MainMumbleSocket.Socket:Write(Message)
 end
 
 function MumbleManager:OnLocalTalking(Who, Begin)
 --    state = 'started'
-    if Begin == false then 
+    if Begin == false then
 --        state = 'stopped' end
         print("player " .. Who.name .. " stopped talking on local")
         Events:Dispatch("Mumble:OnPlayerStopTalking", Who, 0)
@@ -129,7 +131,7 @@ end
 
 function MumbleManager:OnSquadTalking(Who, Begin)
 --    state = 'started'
-    if Begin == false then 
+    if Begin == false then
     --        state = 'stopped' end
         print("player " .. Who.name .. " stopped talking on squad")
         Events:Dispatch("Mumble:OnPlayerStopTalking", Who, 1)
@@ -142,7 +144,7 @@ end
 
 function MumbleManager:OnSquadLeaderTalking(Who, Begin)
 --    state = 'started'
-    if Begin == false then 
+    if Begin == false then
     --        state = 'stopped' end
         print("player " .. Who.name .. " stopped talking on SL comms")
         Events:Dispatch("Mumble:OnPlayerStopTalking", Who, 2)
@@ -154,9 +156,9 @@ function MumbleManager:OnSquadLeaderTalking(Who, Begin)
 end
 
 function MumbleManager:OnStartTalking(Message)
-    Type = Message:byte(2)
-    Who = Message:sub(3):gsub('%W','') 
-    Event = -1
+    local Type = Message:byte(2)
+    local Who = Message:sub(3):gsub('%W','')
+    local Event = -1
 
     if Type == 0x0 then
         Event = self.LOCAL_TALKING
@@ -171,9 +173,9 @@ function MumbleManager:OnStartTalking(Message)
 end
 
 function MumbleManager:OnStopTalking(Message)
-    Type = Message:byte(2)
-    Who = Message:sub(3):gsub('%W','') 
-    Event = -1
+    local Type = Message:byte(2)
+    local Who = Message:sub(3):gsub('%W','') 
+    local Event = -1
 
     if Type == 0x0 then
         Event = self.LOCAL_TALKING
@@ -192,7 +194,7 @@ function MumbleManager:GetInstance()
     if MetaTable.__index == nil then
         MetaTable.__index = MumbleManager()
         MetaTable.__index:InternalInit()
-    end 
+    end
     setmetatable(Instance, MetaTable)
     return Instance
 end
@@ -215,7 +217,7 @@ end
 
 function MumbleManager:OnEvent(Event, ...)
     self.Listeners[Event] = self.Listeners[Event] or {}
-    for Key, Listener in pairs(self.Listeners[Event]) do
+    for _, Listener in pairs(self.Listeners[Event]) do
         Listener.Callback(Listener.Instance, ...)
     end
 end
@@ -234,10 +236,9 @@ end
 
 function MumbleManager:OnUuidReceived(Uuid)
     print('Sending server\'s UUID to mumble (' .. Uuid .. ')')
-    uuidAndNick = Uuid .. '|' .. PlayerManager:GetLocalPlayer().name:sub(0, 27) -- Doesn't have 0x0 but gets appended by z 
-    Message = string.pack('<I4Bz', (uuidAndNick:len() + 2), self.GET_UUID_TYPE, uuidAndNick)
-    self.MainMumbleSocket.Socket:Write(Message)
+    local s_UuidAndNick = Uuid .. '|' .. PlayerManager:GetLocalPlayer().name:sub(0, 27) -- Doesn't have 0x0 but gets appended by z 
+    local s_Message = string.pack('<I4Bz', (s_UuidAndNick:len() + 2), self.GET_UUID_TYPE, s_UuidAndNick)
+    self.MainMumbleSocket.Socket:Write(s_Message)
 end
 
-local Instance = MumbleManager()
-return Instance
+return MumbleManager()

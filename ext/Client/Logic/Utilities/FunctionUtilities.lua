@@ -1,7 +1,7 @@
 class 'FunctionUtilities'
 
 function FunctionUtilities:IsFunction(Func)
-    return Func and _G.type(Func) == 'function' 
+    return Func and _G.type(Func) == 'function'
 end
 
 function FunctionUtilities:RightPadding(Str, Length, Character)
@@ -9,5 +9,4 @@ function FunctionUtilities:RightPadding(Str, Length, Character)
     return Res, Res ~= Str
 end
 
-local Instance = FunctionUtilities()
-return Instance
+return FunctionUtilities()
