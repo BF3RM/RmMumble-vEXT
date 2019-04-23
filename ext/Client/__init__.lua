@@ -17,6 +17,7 @@ local PingEvent = require "Logic/Mumble/TimedEvents/MumblePingEvent"
 local SocketReceiver = require "Logic/Mumble/TimedEvents/MumbleSocketReceiverEvent"
 local ServerCheck = require "Logic/Mumble/TimedEvents/MumbleServerCheckEvent"
 local ThreeDLocation = require "Logic/Mumble/TimedEvents/Mumble3DLocationEvent"
+local MumbleUpdatePlayersInfo = require "Logic/Mumble/TimedEvents/MumbleUpdatePlayersInfo"
 
 function MumbleImplementationClient:__init()
 	print("Initializing MumbleImplementationClient")
@@ -31,6 +32,7 @@ function MumbleImplementationClient:__init()
 	MumbleTimerManager:AddEvent(PingEvent)
 	MumbleTimerManager:AddEvent(ServerCheck)
 	MumbleTimerManager:AddEvent(ThreeDLocation)
+	MumbleTimerManager:AddEvent(MumbleUpdatePlayersInfo)
 
 	self.InGame = false
 	self.KeyPressed = false
