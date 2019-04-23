@@ -43,8 +43,33 @@ function MumbleManager:InternalInit()
     self:AddListener(self.SQUAD_TALKING, self, self.OnSquadTalking)
     self:AddListener(self.SL_TALKING, self, self.OnSquadLeaderTalking)
     NetEvents:Subscribe('MumbleServerManager:OnServerUuid', self, self.OnUuidReceived)
-    NetEvents:Subscribe('MumbleServerManager:OnContextChange', self, self.OnContextChange)
+    Events:Subscribe('Player:SquadChange', self, self.SquadChange)
+    Events:Subscribe('Player:TeamChange', self, self.TeamChange)
     Events:Subscribe('Extension:Unloading', self, self.OnExtensionUnloading)
+end
+
+function MumbleServerManager:SquadChange(p_Player, p_SquadID)
+    if p_Player == nil then
+        return
+    end
+    
+    local s_LocalPlayer = PlayerManager:GetLocalPlayer()
+
+    if s_LocalPlayer ~= nil and s_LocalPlayer.name == p_Player.name then
+        self:OnContextChange(p_Player.squadID, p_Player.teamID, p_Player.isSquadLeader)
+    end
+end
+
+function MumbleServerManager:TeamChange(p_Player, p_TeamID, p_SquadID)
+    if p_Player == nil then
+        return
+    end
+    
+    local s_LocalPlayer = PlayerManager:GetLocalPlayer()
+
+    if s_LocalPlayer ~= nil and s_LocalPlayer.name == p_Player.name then
+        self:OnContextChange(p_Player.squadID, p_Player.teamID, p_Player.isSquadLeader)
+    end
 end
 
 function MumbleManager:OnExtensionUnloading(Player)
