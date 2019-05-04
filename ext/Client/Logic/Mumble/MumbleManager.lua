@@ -82,11 +82,27 @@ function MumbleManager:OnIdentityRequested()
 end
 
 function MumbleManager:OnSquadChange(p_Player, p_SquadID)
-    self:OnContextChange(p_Player.squadID, p_Player.teamID, p_Player.isSquadLeader)
+    if p_Player == nil then
+        return
+    end
+    
+    local s_LocalPlayer = PlayerManager:GetLocalPlayer()
+
+    if s_LocalPlayer ~= nil and s_LocalPlayer.name == p_Player.name then
+        self:OnContextChange(p_Player.squadID, p_Player.teamID, p_Player.isSquadLeader)
+    end
 end
 
 function MumbleManager:OnTeamChange(p_Player, p_TeamID, p_SquadID)
-    self:OnContextChange(p_Player.squadID, p_Player.teamID, p_Player.isSquadLeader)
+    if p_Player == nil then
+        return
+    end
+    
+    local s_LocalPlayer = PlayerManager:GetLocalPlayer()
+
+    if s_LocalPlayer ~= nil and s_LocalPlayer.name == p_Player.name then
+        self:OnContextChange(p_Player.squadID, p_Player.teamID, p_Player.isSquadLeader)
+    end
 end
 
 function MumbleManager:OnContextChange(SquadId, TeamId, IsSquadLeader)
