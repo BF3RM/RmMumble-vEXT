@@ -22,8 +22,8 @@ function MumbleUpdatePlayersInfo:TriggerEvent()
         TeamId = -1
 
         if Player.isSquadLeader == true then IsSquadLeader = 1 end
-        if Player.squadID ~= nil then SquadId = Player.squadID end
-        if Player.teamID ~= nil then TeamId = Player.teamID end
+        if Player.squadId ~= nil then SquadId = Player.squadId end
+        if Player.teamId ~= nil then TeamId = Player.teamId end
 
         Payload = Payload .. string.pack('<I4zi4i4B', Player.name:len(), Player.name, SquadId, TeamId, IsSquadLeader)
     end

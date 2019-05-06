@@ -48,7 +48,7 @@ function MumbleManager:InternalInit()
     Events:Subscribe('Extension:Unloading', self, self.OnExtensionUnloading)
 end
 
-function MumbleManager:SquadChange(p_Player, p_SquadID)
+function MumbleManager:SquadChange(p_Player, p_SquadId)
     if p_Player == nil then
         return
     end
@@ -56,11 +56,11 @@ function MumbleManager:SquadChange(p_Player, p_SquadID)
     local s_LocalPlayer = PlayerManager:GetLocalPlayer()
 
     if s_LocalPlayer ~= nil and s_LocalPlayer.name == p_Player.name then
-        self:OnContextChange(p_Player.squadID, p_Player.teamID, p_Player.isSquadLeader)
+        self:OnContextChange(p_Player.squadId, p_Player.teamId, p_Player.isSquadLeader)
     end
 end
 
-function MumbleManager:TeamChange(p_Player, p_TeamID, p_SquadID)
+function MumbleManager:TeamChange(p_Player, p_TeamId, p_SquadId)
     if p_Player == nil then
         return
     end
@@ -68,7 +68,7 @@ function MumbleManager:TeamChange(p_Player, p_TeamID, p_SquadID)
     local s_LocalPlayer = PlayerManager:GetLocalPlayer()
 
     if s_LocalPlayer ~= nil and s_LocalPlayer.name == p_Player.name then
-        self:OnContextChange(p_Player.squadID, p_Player.teamID, p_Player.isSquadLeader)
+        self:OnContextChange(p_Player.squadId, p_Player.teamId, p_Player.isSquadLeader)
     end
 end
 
