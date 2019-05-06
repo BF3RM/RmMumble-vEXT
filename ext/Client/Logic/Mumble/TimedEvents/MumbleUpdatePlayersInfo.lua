@@ -28,8 +28,7 @@ function MumbleUpdatePlayersInfo:TriggerEvent()
         Payload = Payload .. string.pack('<I4zi4i4B', Player.name:len(), Player.name, SquadId, TeamId, IsSquadLeader)
     end
     Message = string.pack('<I4BI4', Payload:len() + 5, self.UPDATE_PLAYERS_INFO_EVENT_TYPE, #Players) .. Payload
-    NumOfBytes, Status = MumbleManager.MumbleSocket.Socket:Write(Message)
+    NumOfBytes, Status = MumbleManager.MainMumbleSocket.Socket:Write(Message)
 end
 
-Instance = MumbleUpdatePlayersInfo()
-return Instance
+return MumbleUpdatePlayersInfo()

@@ -40,8 +40,8 @@ function MumbleManager:InternalInit()
     self.MainMumbleSocket = MumbleSocket("MainSocket", NetSocketFamily.INET, NetSocketType.Stream, self.MAIN_MUMBLE_SOCKET_PORT)
     self.ThreeDMumbleSocket = MumbleSocket("ThreeDSocket", NetSocketFamily.INET, NetSocketType.Datagram, self.THREE_D_MUMBLE_SOCKET_PORT)
 
-    -- self.MainMumbleSocket:Connect()
-    -- self.ThreeDMumbleSocket:Connect()
+    self.MainMumbleSocket:Connect()
+    self.ThreeDMumbleSocket:Connect()
 
     self:AddListener(self.IDENTITY_REQUEST, self, self.OnIdentityRequested)
     self:AddListener(self.GET_UUID_TYPE, self, self.OnUuidRequested)

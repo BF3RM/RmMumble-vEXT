@@ -38,7 +38,7 @@ function MumbleImplementationClient:__init()
 	MumbleEventManager:AddEvent(MumblePingEvent)
 	MumbleEventManager:AddEvent(MumbleServerCheckEvent)
 	MumbleEventManager:AddEvent(ThreeDMumbleSocketEvent)
-	MumbleTimerManager:AddEvent(MumbleUpdatePlayersInfo)
+	MumbleEventManager:AddEvent(MumbleUpdatePlayersInfo)
 
 	self.InGame = false
 	self.KeyPressed = false

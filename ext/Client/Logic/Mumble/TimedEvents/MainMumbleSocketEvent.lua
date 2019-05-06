@@ -17,9 +17,9 @@ function MainMumbleSocketEvent:GetDataSize(Data)
 end
 
 function MainMumbleSocketEvent:TriggerEvent()
-    if _G.IsMumbleAvailable == false then
-        return
-    end
+    -- if _G.IsMumbleAvailable == false then
+    --     return
+    -- end
 
     self.LastTrigger = os.time(os.date("!*t"))
 
