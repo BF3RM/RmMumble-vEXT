@@ -4,7 +4,7 @@ local MumbleManager = (require "Logic/Mumble/MumbleManager").GetInstance()
 local FunctionUtilities = require 'Logic/Utilities/FunctionUtilities'
 
 function Mumble3DLocationEvent:__init()
-    self.Timeout = 0.2 -- Trigger this event every 5 seconds
+    self.Timeout = 0.05 -- Trigger this event every 5 seconds
     self.RunOnce = false -- Keep running
     
     self.Index = 0
