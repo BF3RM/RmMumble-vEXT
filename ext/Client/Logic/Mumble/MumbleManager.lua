@@ -165,11 +165,11 @@ function MumbleManager:OnStartTalking(Message)
     Who = Message:sub(3):gsub('%W','') 
     Event = -1
 
-    if Type == 0x1 then
+    if Type == 0x2 then
         Event = self.LOCAL_TALKING
-    elseif Type == 0x2 then
-        Event = self.SQUAD_TALKING
     elseif Type == 0x4 then
+        Event = self.SQUAD_TALKING
+    elseif Type == 0x8 then
         Event = self.SL_TALKING
     end
 
