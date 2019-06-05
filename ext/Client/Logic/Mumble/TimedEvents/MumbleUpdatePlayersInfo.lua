@@ -8,6 +8,11 @@ function MumbleUpdatePlayersInfo:__init()
     self.RunOnce = false -- Keep running
 
     self.UPDATE_PLAYERS_INFO_EVENT_TYPE = 117
+    Events:Subscribe('Player:SquadChange', self, self.OnSquadChange)
+end
+
+function MumbleUpdatePlayersInfo:OnSquadChange(p_Player, p_SquadId)
+    self:TriggerEvent()
 end
 
 function MumbleUpdatePlayersInfo:TriggerEvent()

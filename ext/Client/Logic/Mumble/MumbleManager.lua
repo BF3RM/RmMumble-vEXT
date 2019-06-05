@@ -161,19 +161,10 @@ function MumbleManager:OnSquadLeaderTalking(Who, Begin)
 end
 
 function MumbleManager:OnStartTalking(Message)
-    Type = Message:byte(2)
-    Who = Message:sub(3):gsub('%W','') 
-    Event = -1
+    Type = Message:byte(1)
+    Who = Message:sub(2):gsub('%W','') 
 
-    if Type == 0x2 then
-        Event = self.LOCAL_TALKING
-    elseif Type == 0x4 then
-        Event = self.SQUAD_TALKING
-    elseif Type == 0x8 then
-        Event = self.SL_TALKING
-    end
-
-    print (Who .. ' is talking on channel ' .. tostring(Type))
+    Events:Dispatch('Mumble:OnTalk', Who, Type)
 
     self:OnEvent(Event, Who, true)
 end
