@@ -90,8 +90,8 @@ function MumbleManager:OnIdentityRequested()
 end
 
 function MumbleManager:OnContextChange(SquadId, TeamId, IsSquadLeader)
-    SquadId = math.floor(SquadId)
-    TeamId = math.floor(TeamId)
+    SquadId = math.floor(SquadId+0.1)
+    TeamId = math.floor(TeamId+0.1)
 
     IsSquadLeaderBool = 0
     if IsSquadLeader then
@@ -231,8 +231,13 @@ function MumbleManager:OnUuidRequested()
 end
 
 function MumbleManager:OnUuidReceived(Uuid)
+    local s_LocalPlayer = PlayerManager:GetLocalPlayer()
+    if s_LocalPlayer == nil then
+    	return
+    end
+
     print('Sending server\'s UUID to mumble (' .. Uuid .. ')')
-    uuidAndNick = Uuid .. '|' .. PlayerManager:GetLocalPlayer().name:sub(0, 27) -- Doesn't have 0x0 but gets appended by z 
+    uuidAndNick = Uuid .. '|' .. s_LocalPlayer.name:sub(0, 27) -- Doesn't have 0x0 but gets appended by z 
     Message = string.pack('<I4Bz', (uuidAndNick:len() + 2), self.GET_UUID_TYPE, uuidAndNick)
     self.MumbleSocket.Socket:Write(Message)
 end
