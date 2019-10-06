@@ -33,6 +33,8 @@ function MumbleManager:InternalInit()
     self.Listeners = {}
     self.Player = nil
     self.MumbleSocket = require 'Logic/Mumble/MumbleSocket'
+    self.PlayersTalkingState = {}
+    self.LastDelta = 0
 
     self:AddListener(self.IDENTITY_REQUEST, self, self.OnIdentityRequested)
     self:AddListener(self.GET_UUID_TYPE, self, self.OnUuidRequested)
@@ -46,6 +48,7 @@ function MumbleManager:InternalInit()
     Events:Subscribe('Player:SquadChange', self, self.SquadChange)
     Events:Subscribe('Player:TeamChange', self, self.TeamChange)
     Events:Subscribe('Extension:Unloading', self, self.OnExtensionUnloading)
+    Events:Subscribe('Engine:Update', self, self.OnUpdate)
 end
 
 function MumbleManager:SquadChange(p_Player, p_SquadId)
@@ -70,6 +73,27 @@ function MumbleManager:TeamChange(p_Player, p_TeamId, p_SquadId)
     if s_LocalPlayer ~= nil and s_LocalPlayer.name == p_Player.name then
         self:OnContextChange(p_Player.squadId, p_Player.teamId, p_Player.isSquadLeader)
     end
+end
+
+function MumbleManager:OnUpdate(p_Delta, p_SimulationDelta)
+    --self.LastDelta = self.LastDelta + p_Delta
+--
+    --if self.LastDelta < 0.2 then
+    --    return
+    --end
+
+    for playerName, state in pairs(self.PlayersTalkingState) do
+        state.timer = state.timer - p_Delta
+        if state.timer < 0 then
+
+            --call eevent
+            Events:Dispatch('Mumble:OnTalk', playerName, 0x0)
+            print("CLEARING BY TIMEOUT ".. playerName ..", "..state.timer)
+            self.PlayersTalkingState[playerName] = nil
+        end
+    end
+
+    --self.LastDelta = 0
 end
 
 function MumbleManager:OnExtensionUnloading(Player)
@@ -164,7 +188,33 @@ function MumbleManager:OnStartTalking(Message)
     Type = Message:byte(1)
     Who = Message:sub(2):gsub('%W','') 
 
-    Events:Dispatch('Mumble:OnTalk', Who, Type)
+    local s_LocalPlayer = PlayerManager:GetLocalPlayer()
+
+    if s_LocalPlayer == nil then
+        return
+    end
+
+    if s_LocalPlayer.name == Who then
+        Events:Dispatch('Mumble:OnLocalTalk', Type)
+        return
+    end
+
+    if self.PlayersTalkingState[Who] ~= nil then
+
+        -- Player is still talking, reset timer
+        if self.PlayersTalkingState[Who].channel == Type then
+            self.PlayersTalkingState[Who].timer = 1
+
+        -- Player is talking on a new channel, update it
+        else
+            self.PlayersTalkingState[Who].channel = Type
+            Events:Dispatch('Mumble:OnTalk', Who, Type)
+        end
+    else
+        --Player started talking
+        self.PlayersTalkingState[Who] = { channel = Type, timer = 1 }
+        Events:Dispatch('Mumble:OnTalk', Who, Type)
+    end
 
     self:OnEvent(Event, Who, true)
 end
