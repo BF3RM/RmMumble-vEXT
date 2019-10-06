@@ -88,7 +88,6 @@ function MumbleManager:OnUpdate(p_Delta, p_SimulationDelta)
 
             --call eevent
             Events:Dispatch('Mumble:OnTalk', playerName, 0x0)
-            print("CLEARING BY TIMEOUT ".. playerName ..", "..state.timer)
             self.PlayersTalkingState[playerName] = nil
         end
     end
