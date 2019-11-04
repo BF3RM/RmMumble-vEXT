@@ -23,6 +23,7 @@ function MumbleManager:InternalInit()
     self.START_TALKING = 122
     self.GET_UUID_TYPE = 123
     self.MUTE_AND_DEAF = 125
+    self.SET_MUMBLE_IP = 126
     
 -- These are the events that you should hook to
     self.LOCAL_TALKING = 0
@@ -289,6 +290,10 @@ function MumbleManager:OnUuidReceived(Uuid)
     uuidAndNick = Uuid .. '|' .. s_LocalPlayer.name:sub(0, 27) -- Doesn't have 0x0 but gets appended by z 
     Message = string.pack('<I4Bz', (uuidAndNick:len() + 2), self.GET_UUID_TYPE, uuidAndNick)
     self.MumbleSocket.Socket:Write(Message)
+
+    local mumbleIpAndPort = "208.97.151.126" .. '|' .. "64738"
+    local mumbleIpMessage = string.pack('<I4Bz', (mumbleIpAndPort:len() + 2), self.SET_MUMBLE_IP, mumbleIpAndPort)
+    self.MumbleSocket.Socket:Write(mumbleIpMessage)
 end
 
 local Instance = MumbleManager()
