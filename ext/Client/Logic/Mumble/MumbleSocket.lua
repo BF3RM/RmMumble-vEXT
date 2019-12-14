@@ -3,9 +3,10 @@ class "MumbleSocket"
 function MumbleSocket:__init()
     print("Initializing MumbleSocket")
     self.Socket = nil
-    Connected = self:Connect()
     self.MUMBLE_PORT = 64304
     self.IsConnected = false
+
+    Connected = self:Connect()
 end
 
 function MumbleSocket:Connect()
