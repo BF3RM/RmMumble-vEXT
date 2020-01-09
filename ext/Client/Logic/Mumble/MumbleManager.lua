@@ -36,6 +36,7 @@ function MumbleManager:InternalInit()
     self.MumbleSocket = require 'Logic/Mumble/MumbleSocket'
     self.PlayersTalkingState = {}
     self.LastDelta = 0
+    self.MumbleIP = '0.0.0.0|0000'
 
     self:AddListener(self.IDENTITY_REQUEST, self, self.OnIdentityRequested)
     self:AddListener(self.GET_UUID_TYPE, self, self.OnUuidRequested)
@@ -46,6 +47,7 @@ function MumbleManager:InternalInit()
     self:AddListener(self.SQUAD_TALKING, self, self.OnSquadTalking)
     self:AddListener(self.SL_TALKING, self, self.OnSquadLeaderTalking)
     NetEvents:Subscribe('MumbleServerManager:OnServerUuid', self, self.OnUuidReceived)
+    NetEvents:Subscribe('MumbleServerManager:OnMumbleIpUpdated', self, self.OnMumbleIpUpdated)
     Events:Subscribe('Player:SquadChange', self, self.SquadChange)
     Events:Subscribe('Player:TeamChange', self, self.TeamChange)
     Events:Subscribe('Extension:Unloading', self, self.OnExtensionUnloading)
@@ -291,10 +293,15 @@ function MumbleManager:OnUuidReceived(Uuid)
     Message = string.pack('<I4Bz', (uuidAndNick:len() + 2), self.GET_UUID_TYPE, uuidAndNick)
     self.MumbleSocket.Socket:Write(Message)
 
-    local mumbleIpAndPort = "208.97.151.126" .. '|' .. "64738"
+    local mumbleIpAndPort = self.MumbleIP
     local mumbleIpMessage = string.pack('<I4Bz', (mumbleIpAndPort:len() + 2), self.SET_MUMBLE_IP, mumbleIpAndPort)
     self.MumbleSocket.Socket:Write(mumbleIpMessage)
 end
+
+function MumbleManager:OnMumbleIpUpdated(MumbleIP)
+    self.MumbleIP = MumbleIP
+end
+
 
 local Instance = MumbleManager()
 return Instance

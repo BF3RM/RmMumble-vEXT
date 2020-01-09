@@ -8,7 +8,6 @@ function MumbleImplementationServer:__init()
 	self:RegisterEvents()
 end
 
-
 function MumbleImplementationServer:RegisterVars()
 end
 
