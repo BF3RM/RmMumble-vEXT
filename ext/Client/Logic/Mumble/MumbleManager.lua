@@ -299,7 +299,6 @@ function MumbleManager:OnUuidReceived(Uuid)
 end
 
 function MumbleManager:OnMumbleIpUpdated(MumbleIP)
-    print("---------------------got ip ".. MumbleIP)
     self.MumbleIP = MumbleIP
 end
 
