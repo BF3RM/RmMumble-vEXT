@@ -1,47 +1,35 @@
 class 'MumbleServerManager'
 
-local mumbleIP = '0.0.0.0|0000'
 
 function MumbleServerManager:__init()
-	self:RegisterVars()
+	self.mumbleServerIp = '127.0.0.1|64738'
+
     self:SubscribeEvents()
 	self:RegisterRCONCommand()
 end
-function MumbleServerManager:RegisterVars()
-end
 
 function MumbleServerManager:SubscribeEvents()
-    NetEvents:Subscribe('MumbleServerManager:RequestServerUuid', self, self.OnRequestServerUuid)
-    Events:Subscribe('Engine:Message', self, self.OnEngineMessage)
-    Events:Subscribe('Player:Authenticated', self, self.OnPlayerAuthenticated)
+	NetEvents:Subscribe('MumbleServerManager:RequestServerUuid', self, self.OnRequestServerUuid)
+	NetEvents:Subscribe('MumbleServerManager:GetMumbleServerIp', self, self.OnGetMumbleServerIp)
+end
+
+function MumbleServerManager:OnGetMumbleServerIp(player)
+    NetEvents:SendTo('MumbleServerManager:MumbleServerAddressChanged', player, self.mumbleServerIp)
 end
 
 function MumbleServerManager:OnRequestServerUuid(player)
     NetEvents:SendTo('MumbleServerManager:OnServerUuid', player, tostring(RCON:GetServerGUID()))
 end
 
-function MumbleServerManager:OnEngineMessage(p_Message)
-    if p_Message.type == MessageType.ServerPlayerSquadLeaderStatusChangedMessage then 
-        --self:OnContextChange()
-    end
-end
-
-function MumbleServerManager:OnPlayerAuthenticated(player)
-	NetEvents:SendTo('MumbleServerManager:OnMumbleIpUpdated', player, mumbleIP)
-end
-
 function MumbleServerManager:OnMumbleIpUpdated(command, args, loggedIn)
-	print('Set mumble IP')
-	print(args[1])
-	mumbleIP = tostring(args[1])
-	print(mumbleIP)
-	NetEvents:BroadcastLocal('MumbleServerManager:OnMumbleIpUpdated', mumbleIP)
+	self.mumbleServerIp = tostring(args[1])
+	NetEvents:BroadcastLocal('MumbleServerManager:MumbleServerAddressChanged', self.mumbleServerIp)
 	return { 'OK', 'Mumble IP set' }
 end
 
 function MumbleServerManager:RegisterRCONCommand()
 
-	commandHandle = RCON:RegisterCommand('RM.MumbleIP', RemoteCommandFlag.RequiresLogin, '0.0.0.0|0000', self.OnMumbleIpUpdated)
+	commandHandle = RCON:RegisterCommand('RM.MumbleServerIp', RemoteCommandFlag.RequiresLogin, '127.0.0.1|64738', self.OnMumbleIpUpdated)
 
 	if commandHandle == 0 then
 		-- This means that a command with the same name already exists
