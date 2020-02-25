@@ -46,7 +46,6 @@ end
 
 function TCPSocket:AttemptConnection()
     local connectResult = self.socket:Connect('127.0.0.1', 64304)
-    print('TCPSocket Connect() returned ' .. connectResult)
     if connectResult == 0 then
         print('Connected to mumble')
         self.socketOpen = true
