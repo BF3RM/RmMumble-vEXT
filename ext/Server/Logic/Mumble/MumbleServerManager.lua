@@ -9,7 +9,12 @@ function MumbleServerManager:__init()
 end
 
 function MumbleServerManager:SubscribeEvents()
+	Events:Subscribe('Player:Authenticated', self, self.OnPlayerAuthenticated)
 	NetEvents:Subscribe('MumbleServerManager:GetMumbleServerIp', self, self.OnGetMumbleServerIp)
+end
+
+function MumbleServerManager:OnPlayerAuthenticated(player)
+	self:OnGetMumbleServerIp(player)
 end
 
 function MumbleServerManager:OnGetMumbleServerIp(player)

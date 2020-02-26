@@ -11,8 +11,8 @@ function MumbleImplementationClient:__init()
     self.levelLoaded = false
     self.inGame = PlayerManager:GetLocalPlayer() ~= nil
 
-    self.tcpHandler = TCPSocket()
-    self.udpHandler = UDPSocket()
+    self.tcpHandler = nil
+    self.udpHandler = nil
 end 
 
 function MumbleImplementationClient:RegisterEvents()
@@ -25,15 +25,22 @@ function MumbleImplementationClient:OnJoining()
 end
 
 function MumbleImplementationClient:OnInGame()
+    if self.tcpHandler == nil then
+        self.tcpHandler = TCPSocket()
+    end
+    
+    if self.udpHandler == nil then
+        self.udpHandler = UDPSocket()
+    end
 end
 
 function MumbleImplementationClient:OnUpdate(delta, simulationDelta)
 	if self.levelLoaded and not self.inGame and PlayerManager:GetLocalPlayer() ~= nil then
         self.inGame = true
-        self:OnInGame()
     end
     
     if self.inGame then
+        self:OnInGame()
         self.tcpHandler:Tick(delta)
         self.udpHandler:Tick(delta)
     end
