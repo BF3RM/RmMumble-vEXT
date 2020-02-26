@@ -87,7 +87,7 @@ function TCPSocket:OnConnected()
     Message = string.pack('<I4Bz', (uuidAndNick:len() + 2), 123, uuidAndNick)
     self.socket:Write(Message)
 
-    NetEvents:Send("MumbleServerManager:GetMumbleServerIp")
+    NetEvents:SendLocal('MumbleServerManager:GetMumbleServerIp')
 end
 
 function TCPSocket:HandlePacket(packet)
