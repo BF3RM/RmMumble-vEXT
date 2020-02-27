@@ -24,8 +24,11 @@ end
 
 function TCPSocket:OnMumbleServerAddressChanged(mumbleServerAddress)
     self.targetServer = mumbleServerAddress
-    message = string.pack('<I4Bz', (self.targetServer:len() + 2), 126, self.targetServer)
-    self.socket:Write(message)
+    if self.socketOpen then
+      self:OnConnected()
+      message = string.pack('<I4Bz', (self.targetServer:len() + 2), 126, self.targetServer)
+      self.socket:Write(message)
+    end
 end
 
 function TCPSocket:SetupSocket()
