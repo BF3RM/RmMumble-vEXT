@@ -1,6 +1,7 @@
 require 'TCP/Ping'
 require 'TCP/UpdatePlayersInfo'
 require 'TCP/PlayerContext'
+require 'TCP/VoiceEvents'
 
 class 'TCPSocket'
 
@@ -19,13 +20,14 @@ function TCPSocket:__init()
     self.pingHandler = Ping(self.socket)
     self.updatePlayersInfoHandler = UpdatePlayersInfo(self.socket)
     self.playerContextHandler = PlayerContext(self.socket)
+    self.voiceEventsHandler = VoiceEvents()
     self:SetupSocket()
 end 
 
 function TCPSocket:OnMumbleServerAddressChanged(mumbleServerAddress)
     self.targetServer = mumbleServerAddress
     if self.socketOpen then
-      self:OnConnected()
+      self:SendNickname()
       message = string.pack('<I4Bz', (self.targetServer:len() + 2), 126, self.targetServer)
       self.socket:Write(message)
     end
@@ -79,7 +81,7 @@ function TCPSocket:AttemptConnection()
     end
 end
 
-function TCPSocket:OnConnected()
+function TCPSocket:SendNickname()
     local localPlayer = PlayerManager:GetLocalPlayer()
     if localPlayer == nil then
         print('Local player was nil for some reason. Cannot send nickname.')
@@ -89,13 +91,22 @@ function TCPSocket:OnConnected()
     local uuidAndNick = 'Uuid' .. '|' .. localPlayer.name:sub(0, 27) -- Doesn't have 0x0 but gets appended by z 
     Message = string.pack('<I4Bz', (uuidAndNick:len() + 2), 123, uuidAndNick)
     self.socket:Write(Message)
+end
+
+function TCPSocket:OnConnected()
+    self:SendNickname()
 
     NetEvents:SendLocal('MumbleServerManager:GetMumbleServerIp')
 end
 
 function TCPSocket:HandlePacket(packet)
-    eventType = packet:sub(0, 1):byte()
-    --print('received eventType ' .. eventType)
+    eventType = packet:byte(1)
+
+    if eventType == 122 then
+        voiceType = packet:byte(2)
+        who = packet:sub(3):gsub('%W','')
+        self.voiceEventsHandler:HandleStartVoiceEvent(voiceType, who)
+    end
 end
 
 function TCPSocket:HandleRead()
@@ -144,6 +155,8 @@ function TCPSocket:Tick(delta)
 
     self:HandleConnection()
     self:HandleRead()
+
+    self.voiceEventsHandler:Tick(delta)
 
     if self.socketOpen then
         self.pingHandler:Tick(delta)
