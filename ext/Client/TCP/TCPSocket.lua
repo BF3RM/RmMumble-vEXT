@@ -16,6 +16,7 @@ function TCPSocket:__init()
 
     NetEvents:Subscribe('MumbleServerManager:MumbleServerAddressChanged', self, self.OnMumbleServerAddressChanged)
     Events:Subscribe('Extension:Unloading', self, self.OnExtensionUnloading)
+    Events:Subscribe('Player:Connected', self, self.OnPlayerConnected)
 
     self.pingHandler = Ping(self.socket)
     self.updatePlayersInfoHandler = UpdatePlayersInfo(self.socket)
@@ -23,6 +24,11 @@ function TCPSocket:__init()
     self.voiceEventsHandler = VoiceEvents()
     self:SetupSocket()
 end 
+
+function TCPSocket:OnPlayerConnected(player)
+    -- force player name update here
+    self:SendNickname()
+end
 
 function TCPSocket:OnMumbleServerAddressChanged(mumbleServerAddress)
     self.targetServer = mumbleServerAddress
@@ -51,6 +57,7 @@ end
 
 function TCPSocket:AttemptConnection()
     local connectResult = self.socket:Connect('127.0.0.1', 64304)
+    print(connectResult)
     if connectResult == 0 then
         print('Connected to mumble')
         self.socketOpen = true
@@ -64,7 +71,7 @@ function TCPSocket:AttemptConnection()
         print('Connect returned WSAEINVAL')
         return false
     elseif connectResult == 10037 then -- WSAEALREADY
-        self.isConnecting = false
+        self.isConnecting = true
         self.reconnectionDelta = 0.0
         return true
     elseif connectResult == 10056 then -- WSAEISCONN
@@ -121,6 +128,9 @@ function TCPSocket:HandleRead()
         print('Connection deaded. Rest in pepperoni mumble.')
         self.socket:Destroy()
         self.socket = Net:Socket(NetSocketFamily.INET, NetSocketType.Stream)
+        self.pingHandler.socket = self.socket
+        self.updatePlayersInfoHandler.socket = self.socket
+        self.playerContextHandler.socket = self.socket
         self.socketOpen = false
     elseif data == nil then
         return
@@ -144,11 +154,12 @@ function TCPSocket:HandleConnection()
 end
 
 function TCPSocket:Tick(delta)
-    if not self.isConnecting and not self.socketOpen then
+    if not self.socketOpen then
         self.reconnectionDelta = self.reconnectionDelta + delta
     end
 
     if self.reconnectionDelta >= 5.0 then
+        self.isConnecting = false
         self.reconnectionDelta = 0.0
         self:SetupSocket()
     end
