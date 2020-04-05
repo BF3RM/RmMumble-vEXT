@@ -41,7 +41,7 @@ end
 
 function TCPSocket:SetupSocket()
     if not self:AttemptConnection() then
-        print('Retrying in 5 seconds... if only it was implemented.')
+        print('Retrying in 5 seconds...')
     end
 end
 
@@ -64,9 +64,9 @@ function TCPSocket:AttemptConnection()
         self.reconnectionDelta = 0.0
         return true
     elseif connectResult == 10035 then -- connecting
-        --print('Connecting to mumble')
-        self.isConnecting = true
-        return true
+        print('Coulnd\'t connect to mumble. Is mumble up and running?')
+        self.isConnecting = false
+        return false
     elseif connectResult == 10022 then --  WSAEINVAL
         print('Connect returned WSAEINVAL')
         return false
@@ -164,7 +164,7 @@ function TCPSocket:Tick(delta)
         self:SetupSocket()
     end
 
-    self:HandleConnection()
+    -- self:HandleConnection()
     self:HandleRead()
 
     self.voiceEventsHandler:Tick(delta)
