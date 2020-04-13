@@ -27,7 +27,12 @@ end
 
 function TCPSocket:OnPlayerConnected(player)
     -- force player name update here
-    self:SendNickname()
+    if player == nil then
+        return
+    end
+    if player == PlayerManager:GetLocalPlayer() then
+        self:SendNickname()
+    end
 end
 
 function TCPSocket:OnMumbleServerAddressChanged(mumbleServerAddress)
