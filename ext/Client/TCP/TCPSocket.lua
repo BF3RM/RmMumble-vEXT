@@ -6,7 +6,7 @@ require 'TCP/VoiceEvents'
 class 'TCPSocket'
 
 function TCPSocket:__init()
-	print("Initializing TCPSocket")
+    print("Initializing TCPSocket")
 
     self.socket = Net:Socket(NetSocketFamily.INET, NetSocketType.Stream)
     self.socketOpen = false
@@ -47,6 +47,7 @@ end
 function TCPSocket:SetupSocket()
     if not self:AttemptConnection() then
         print('Coulnd\'t connect to mumble. Is mumble up and running? Retrying in 5 seconds...')
+        Events:Dispatch('Mumble:Connected', false)
     end
 end
 
@@ -105,7 +106,7 @@ end
 
 function TCPSocket:OnConnected()
     self:SendNickname()
-
+    Events:Dispatch('Mumble:Connected', true)
     NetEvents:SendLocal('MumbleServerManager:GetMumbleServerIp')
 end
 
