@@ -5,42 +5,35 @@ require 'TCP/VoiceEvents'
 
 class 'TCPSocket'
 
-function TCPSocket:__init()
+function TCPSocket:__init(targetServer)
     print("Initializing TCPSocket")
 
     self.socket = Net:Socket(NetSocketFamily.INET, NetSocketType.Stream)
     self.socketOpen = false
     self.isConnecting = false
-    self.targetServer = '127.0.0.1|64738'
+    self.targetServer = targetServer
     self.reconnectionDelta = 0.0
 
-    NetEvents:Subscribe('MumbleServerManager:MumbleServerAddressChanged', self, self.OnMumbleServerAddressChanged)
+    -- NetEvents:Subscribe('MumbleServerManager:MumbleServerAddressChanged', self, self.OnMumbleServerAddressChanged)
     Events:Subscribe('Extension:Unloading', self, self.OnExtensionUnloading)
-    Events:Subscribe('Player:Connected', self, self.OnPlayerConnected)
 
     self.pingHandler = Ping(self.socket)
     self.updatePlayersInfoHandler = UpdatePlayersInfo(self.socket)
     self.playerContextHandler = PlayerContext(self.socket)
     self.voiceEventsHandler = VoiceEvents()
     self:SetupSocket()
-end 
-
-function TCPSocket:OnPlayerConnected(player)
-    -- force player name update here
-    if player == nil then
-        return
-    end
-    if player == PlayerManager:GetLocalPlayer() then
-        self:SendNickname()
-    end
 end
 
 function TCPSocket:OnMumbleServerAddressChanged(mumbleServerAddress)
     self.targetServer = mumbleServerAddress
+    self:SendMumbleClientIP()
+end
+
+function TCPSocket:SendMumbleClientIP()
     if self.socketOpen then
-      self:SendNickname()
-      message = string.pack('<I4Bz', (self.targetServer:len() + 2), 126, self.targetServer)
-      self.socket:Write(message)
+        print("Sending murmur ip to mumble.")
+        local message = string.pack('<I4Bz', (self.targetServer:len() + 2), 126, self.targetServer)
+        self.socket:Write(message)
     end
 end
 
@@ -93,11 +86,17 @@ function TCPSocket:AttemptConnection()
 end
 
 function TCPSocket:SendNickname()
+    if not self.socketOpen then
+        return
+    end
+
     local localPlayer = PlayerManager:GetLocalPlayer()
     if localPlayer == nil then
         print('Local player was nil for some reason. Cannot send nickname.')
         return
     end
+
+    print('Sending local player\'s nickname: ' .. tostring(localPlayer.name))
 
     local uuidAndNick = 'Uuid' .. '|' .. localPlayer.name:sub(0, 27) -- Doesn't have 0x0 but gets appended by z 
     Message = string.pack('<I4Bz', (uuidAndNick:len() + 2), 123, uuidAndNick)
@@ -105,6 +104,7 @@ function TCPSocket:SendNickname()
 end
 
 function TCPSocket:OnConnected()
+    self:SendMumbleClientIP()
     self:SendNickname()
     Events:Dispatch('Mumble:Connected', true)
     NetEvents:SendLocal('MumbleServerManager:GetMumbleServerIp')
@@ -144,7 +144,7 @@ function TCPSocket:HandleRead()
     elseif data:len() > 0 then -- data available
         local packetSize = string.unpack('<I4', data)
         --print('received ' .. data:len() .. ' bytes. Packet size: ' .. packetSize)
-        data, statusCode = self.socket:Read(packetSize) -- pretending data will always be ok
+        local data, statusCode = self.socket:Read(packetSize) -- pretending data will always be ok
         self:HandlePacket(data)
     end
 end
@@ -168,7 +168,6 @@ function TCPSocket:Tick(delta)
         self:SetupSocket()
     end
 
-    -- self:HandleConnection()
     self:HandleRead()
 
     self.voiceEventsHandler:Tick(delta)
