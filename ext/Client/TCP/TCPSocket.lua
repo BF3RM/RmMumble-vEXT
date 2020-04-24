@@ -22,6 +22,7 @@ function TCPSocket:__init(targetServer)
     self.playerContextHandler = PlayerContext(self.socket)
     self.voiceEventsHandler = VoiceEvents()
     self:SetupSocket()
+    self:SendNickname()
 end
 
 function TCPSocket:OnMumbleServerAddressChanged(mumbleServerAddress)
@@ -105,7 +106,6 @@ end
 
 function TCPSocket:OnConnected()
     self:SendMumbleClientIP()
-    self:SendNickname()
     Events:Dispatch('Mumble:Connected', true)
     NetEvents:SendLocal('MumbleServerManager:GetMumbleServerIp')
 end
@@ -149,13 +149,13 @@ function TCPSocket:HandleRead()
     end
 end
 
-function TCPSocket:HandleConnection()
-    if not self.isConnecting then
-        return
-    else
-        self:AttemptConnection()
-    end
-end
+-- function TCPSocket:HandleConnection()
+--     if not self.isConnecting then
+--         return
+--     else
+--         self:AttemptConnection()
+--     end
+-- end
 
 function TCPSocket:Tick(delta)
     if not self.socketOpen then

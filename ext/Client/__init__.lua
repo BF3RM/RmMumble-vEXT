@@ -21,6 +21,14 @@ function MumbleImplementationClient:RegisterEvents()
 	Events:Subscribe("Engine:Update", self, self.OnUpdate)
     NetEvents:Subscribe('MumbleServerManager:MumbleServerAddressChanged', self, self.OnMumbleServerAddressChanged)
     Events:Subscribe("Player:Connected", self, self.OnPlayerConnected)
+    Events:Subscribe('Level:Destroy', self, self.OnLevelDestroyed)
+end
+
+function MumbleImplementationClient:OnLevelDestroyed()
+    self.levelLoaded = false
+    self.inGame = false
+    self.tcpHandler = nil
+    self.udpHandler = nil
 end
 
 function MumbleImplementationClient:OnMumbleServerAddressChanged(mumbleServerAddress)
