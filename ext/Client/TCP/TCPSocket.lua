@@ -105,6 +105,7 @@ function TCPSocket:SendNickname()
 end
 
 function TCPSocket:OnConnected()
+    self:SendNickname()
     self:SendMumbleClientIP()
     Events:Dispatch('Mumble:Connected', true)
     NetEvents:SendLocal('MumbleServerManager:GetMumbleServerIp')
