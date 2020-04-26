@@ -30,9 +30,8 @@ function UDPSocket:Tick(delta)
     end
 
     if self.socketOpen then
-        local player = PlayerManager:GetLocalPlayer()
-        if player ~= nil and player.soldier ~= nil then
-            transform = player.soldier.worldTransform
+        local transform = ClientUtils:GetCameraTransform()
+        if transform ~= nil then
             position = transform.trans
             front = transform.forward
             up = transform.up
