@@ -99,8 +99,8 @@ function TCPSocket:SendNickname()
 
     print('Sending local player\'s nickname: ' .. tostring(localPlayer.name))
 
-    local uuidAndNick = 'Uuid' .. '|' .. localPlayer.name:sub(0, 27) -- Doesn't have 0x0 but gets appended by z 
-    Message = string.pack('<I4Bz', (uuidAndNick:len() + 2), 123, uuidAndNick)
+    local nick = localPlayer.name:sub(0, 27) -- Doesn't have 0x0 but gets appended by z 
+    Message = string.pack('<I4Bz', (nick:len() + 2), 123, nick)
     self.socket:Write(Message)
 end
 
