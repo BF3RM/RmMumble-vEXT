@@ -17,7 +17,7 @@ function MumbleImplementationClient:__init()
 end 
 
 function MumbleImplementationClient:RegisterEvents()
-	Events:Subscribe("Client:LevelLoaded", self, self.OnJoining)
+	Events:Subscribe("Level:Loaded", self, self.OnLevelLoaded)
 	Events:Subscribe("Engine:Update", self, self.OnUpdate)
     NetEvents:Subscribe('MumbleServerManager:MumbleServerAddressChanged', self, self.OnMumbleServerAddressChanged)
     Events:Subscribe("Player:Connected", self, self.OnPlayerConnected)
@@ -53,7 +53,7 @@ function MumbleImplementationClient:OnPlayerConnected(player)
     end
 end
 
-function MumbleImplementationClient:OnJoining()
+function MumbleImplementationClient:OnLevelLoaded()
 	self.levelLoaded = true
 end
 
