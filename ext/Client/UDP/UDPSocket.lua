@@ -36,7 +36,7 @@ function UDPSocket:Tick(delta)
             front = transform.forward
             up = transform.up
     
-            message = string.pack('<fffffffff', -position.x, position.y, position.z, -front.x, front.y, front.z, -up.x, up.y, up.z)
+            message = string.pack('<fffffffff', position.x, position.y, position.z, front.x, front.y, front.z, up.x, up.y, up.z)
             self.socket:Write(message)
         end
     end
