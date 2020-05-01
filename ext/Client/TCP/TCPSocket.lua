@@ -116,7 +116,7 @@ function TCPSocket:HandlePacket(packet)
 
     if eventType == 122 then
         voiceType = packet:byte(2)
-        who = packet:sub(3):gsub('%W','')
+        who = packet:sub(3)
         self.voiceEventsHandler:HandleStartVoiceEvent(voiceType, who)
     end
 end
@@ -149,14 +149,6 @@ function TCPSocket:HandleRead()
         self:HandlePacket(data)
     end
 end
-
--- function TCPSocket:HandleConnection()
---     if not self.isConnecting then
---         return
---     else
---         self:AttemptConnection()
---     end
--- end
 
 function TCPSocket:Tick(delta)
     if not self.socketOpen then
