@@ -58,13 +58,12 @@ function VoiceEvents:HandleStartVoiceEvent(voiceType, who)
 		
 		if self.playersTalkingState[who] ~= nil then
 			if self.playersTalkingState[who].channel == channels then
-				self.playersTalkingState[who].timer = 1
 			else
 				self.playersTalkingState[who].channel = channels
 				Events:Dispatch('Mumble:OnTalk', who, channels)
 			end
 		else
-			self.playersTalkingState[who] = { channel = channels, timer = 1 }
+			self.playersTalkingState[who] = { channel = channels }
 			Events:Dispatch('Mumble:OnTalk', who, channels)
 		end
 	end
@@ -97,12 +96,4 @@ function VoiceEvents:DecodeVoiceChannels(p_VoiceChannelsByte)
 end
 
 function VoiceEvents:Tick(delta)
-    for playerName, state in pairs(self.playersTalkingState) do
-        state.timer = state.timer - delta
-        if state.timer < 0 then
-			print('1')
-            Events:Dispatch('Mumble:OnTalk', playerName, {VoiceChannelType.NotTalking})
-            self.playersTalkingState[playerName] = nil
-        end
-    end
 end

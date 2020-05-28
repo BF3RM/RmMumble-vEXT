@@ -21,6 +21,7 @@ function MumbleImplementationClient:RegisterEvents()
 	Events:Subscribe("Engine:Update", self, self.OnUpdate)
     NetEvents:Subscribe('MumbleServerManager:MumbleServerAddressChanged', self, self.OnMumbleServerAddressChanged)
     Events:Subscribe("Player:Connected", self, self.OnPlayerConnected)
+    Events:Subscribe("Player:Deleted", self, self.OnPlayerDeleted)
     Events:Subscribe('Level:Destroy', self, self.OnLevelDestroyed)
 end
 
@@ -51,6 +52,13 @@ function MumbleImplementationClient:OnPlayerConnected(player)
     if player == PlayerManager:GetLocalPlayer() then
         NetEvents:SendLocal('MumbleServerManager:GetMumbleServerIp')
     end
+end
+
+function MumbleImplementationClient:OnPlayerDeleted(player)
+    if player == nil then
+        return
+    end
+	Events:Dispatch('Mumble:OnTalk', player.name, {VoiceChannelType.NotTalking})
 end
 
 function MumbleImplementationClient:OnLevelLoaded()
