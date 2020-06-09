@@ -1,95 +1,93 @@
--- Available events:
---  - Mumble:OnPlayerStartTalking (PlayerName, VoiceChannel)
---  - Mumble:OnPlayerStopTalking (PlayerName, VoiceChannel)
---  - Mumble:OnClientNotAvailable ()
--- 
--- Where VoiceChannel:
---  - 0 == Local
---  - 1 == Squad
---  - 2 == Squad Leader Direct
+require 'TCP/TCPSocket'
+require 'UDP/UDPSocket'
 
 class 'MumbleImplementationClient'
 
-local MumbleManager = (require "Logic/Mumble/MumbleManager").GetInstance()
-local MumbleTimerManager = require "Logic/Mumble/MumbleTimerManager"
-
-local PingEvent = require "Logic/Mumble/TimedEvents/MumblePingEvent"
-local SocketReceiver = require "Logic/Mumble/TimedEvents/MumbleSocketReceiverEvent"
-local ServerCheck = require "Logic/Mumble/TimedEvents/MumbleServerCheckEvent"
-local ThreeDLocation = require "Logic/Mumble/TimedEvents/Mumble3DLocationEvent"
-local MumbleUpdatePlayersInfo = require "Logic/Mumble/TimedEvents/MumbleUpdatePlayersInfo"
-
 function MumbleImplementationClient:__init()
 	print("Initializing MumbleImplementationClient")
-	--MumbleTimerManager:AddEvent(SocketReceiver)
 
-	self:RegisterVars()
-	self:RegisterEvents()
-	SocketReceiver:__init()
-	
-	MumbleManager:AddListener(MumbleManager.EVENT_MUMBLE_NOT_AVAILABLE, self, self.OnMumbleNotAvailable)
-	
-	MumbleTimerManager:AddEvent(PingEvent)
-	MumbleTimerManager:AddEvent(ServerCheck)
-	MumbleTimerManager:AddEvent(ThreeDLocation)
-	MumbleTimerManager:AddEvent(MumbleUpdatePlayersInfo)
+    self:RegisterEvents()
 
-	self.InGame = false
-	self.KeyPressed = false
-	self.MuteAndDeaf = true
-	self.LevelLoaded = false
+    self.levelLoaded = false
+    self.inGame = false
+
+    self.tcpHandler = nil
+    self.udpHandler = nil
+    self.targetServer = '127.0.0.1|64738'
 end 
 
-function MumbleImplementationClient:OnMumbleNotAvailable()
-	Events:Dispatch('Mumble:OnClientNotAvailable')
-end
-
-function MumbleImplementationClient:RegisterVars()
-	--self.m_this = that
-end
-
-
 function MumbleImplementationClient:RegisterEvents()
-	Hooks:Install("Input:PreUpdate", 999, self, self.OnPreUpdateInput)
-	Events:Subscribe("Client:LevelLoaded", self, self.OnJoining)
+	Events:Subscribe("Level:Loaded", self, self.OnLevelLoaded)
 	Events:Subscribe("Engine:Update", self, self.OnUpdate)
---	Events:Subscribe("Player:Joining", self, self.OnJoining)
+    NetEvents:Subscribe('MumbleServerManager:MumbleServerAddressChanged', self, self.OnMumbleServerAddressChanged)
+    Events:Subscribe("Player:Connected", self, self.OnPlayerConnected)
+    Events:Subscribe("Player:Deleted", self, self.OnPlayerDeleted)
+    Events:Subscribe('Level:Destroy', self, self.OnLevelDestroyed)
 end
 
-function MumbleImplementationClient:OnJoining()
-	self.LevelLoaded = true
+function MumbleImplementationClient:OnLevelDestroyed()
+    self.levelLoaded = false
+    self.inGame = false
+    self.tcpHandler = nil
+    self.udpHandler = nil
 end
 
-function MumbleImplementationClient:OnLoaded()
-	-- Initialize the WebUI
-	WebUI:Init()
+function MumbleImplementationClient:OnMumbleServerAddressChanged(mumbleServerAddress)
+    -- Ignore if it hasnt changed.
+    if mumbleServerAddress == self.targetServer then
+        return
+    end
+    print("Got new murmur ip")
+    self.targetServer = mumbleServerAddress
 
-	-- Show the WebUI
-	WebUI:Show()
-
+    if self.tcpHandler then
+        self.tcpHandler:OnMumbleServerAddressChanged(mumbleServerAddress)
+    end
 end
 
-function MumbleImplementationClient:OnPreUpdateInput(p_Hook, p_Cache, p_DeltaTime)
-	--[[if p_Cache[InputConceptIdentifiers.ConceptReload] > 0.0 and not self.KeyPressed then 
-		--MumbleManager:SetMuteAndDeaf(self.MuteAndDeaf, self.MuteAndDeaf)
-		self.MuteAndDeaf = not self.MuteAndDeaf
-		self.KeyPressed = true
-	elseif p_Cache[InputConceptIdentifiers.ConceptReload] == 0.0 and self.KeyPressed then
-		self.KeyPressed = false
-	end
-	]]
+function MumbleImplementationClient:OnPlayerConnected(player)
+    if player == nil then
+        return
+    end
+    if player == PlayerManager:GetLocalPlayer() then
+        NetEvents:SendLocal('MumbleServerManager:GetMumbleServerIp')
+    end
 end
 
-function MumbleImplementationClient:OnUpdate(p_Delta, p_SimulationDelta)
-	if self.LevelLoaded and not self.InGame and PlayerManager:GetLocalPlayer() ~= nil then
-		self.InGame = true
-	end
-	if self.InGame then
-		MumbleManager:Update(p_Delta)
-		MumbleTimerManager:Update(p_Delta)
-		SocketReceiver:TriggerEvent() -- Let's trigger it manually at each tick for now
-	end
+function MumbleImplementationClient:OnPlayerDeleted(player)
+    if player == nil then
+        return
+    end
+	Events:Dispatch('Mumble:OnTalk', player.name, {VoiceChannelType.NotTalking})
 end
 
-g_MumbleImplementationClient = MumbleImplementationClient()
+function MumbleImplementationClient:OnLevelLoaded()
+	self.levelLoaded = true
+end
+
+function MumbleImplementationClient:OnInGame()
+    if self.tcpHandler == nil then
+        print("LevelLoaded, creating TCPSocket.")
+        self.tcpHandler = TCPSocket(self.targetServer)
+    end
+    
+    if self.udpHandler == nil then
+        print("LevelLoaded, creating UDPSocket.")
+        self.udpHandler = UDPSocket()
+    end
+end
+
+function MumbleImplementationClient:OnUpdate(delta, simulationDelta)
+	if self.levelLoaded and not self.inGame and PlayerManager:GetLocalPlayer() ~= nil then
+        self.inGame = true
+        self:OnInGame()
+    end
+    
+    if self.inGame then
+        self.tcpHandler:Tick(delta)
+        self.udpHandler:Tick(delta)
+    end
+end
+
+gMumbleImplementationClient = MumbleImplementationClient()
 
