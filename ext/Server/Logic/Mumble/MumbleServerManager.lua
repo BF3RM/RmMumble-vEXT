@@ -14,13 +14,10 @@ function MumbleServerManager:SubscribeEvents()
     NetEvents:Subscribe('MumbleServerManager:RequestServerUuid', self, self.OnRequestServerUuid)
     Events:Subscribe('Engine:Message', self, self.OnEngineMessage)
     Events:Subscribe('Player:Authenticated', self, self.OnPlayerAuthenticated)
-	Events:Subscribe('Level:LoadResources', self, self.OnLoadResources)
-
 end
 
 function MumbleServerManager:OnRequestServerUuid(player)
-    NetEvents:SendToLocal('MumbleServerManager:OnServerUuid', player, tostring(RCON:GetServerGUID()))
-    NetEvents:SendToLocal('MumbleServerManager:OnMumbleIpUpdated', player, mumbleIP)
+    NetEvents:SendTo('MumbleServerManager:OnServerUuid', player, tostring(RCON:GetServerGUID()))
 end
 
 function MumbleServerManager:OnEngineMessage(p_Message)
@@ -30,16 +27,14 @@ function MumbleServerManager:OnEngineMessage(p_Message)
 end
 
 function MumbleServerManager:OnPlayerAuthenticated(player)
-	NetEvents:SendToLocal('MumbleServerManager:OnMumbleIpUpdated', player, mumbleIP)
-end
-
-function MumbleServerManager:OnLoadResources()
-	NetEvents:BroadcastLocal('MumbleServerManager:OnMumbleIpUpdated', mumbleIP)
+	NetEvents:SendTo('MumbleServerManager:OnMumbleIpUpdated', player, mumbleIP)
 end
 
 function MumbleServerManager:OnMumbleIpUpdated(command, args, loggedIn)
 	print('Set mumble IP')
+	print(args[1])
 	mumbleIP = tostring(args[1])
+	print(mumbleIP)
 	NetEvents:BroadcastLocal('MumbleServerManager:OnMumbleIpUpdated', mumbleIP)
 	return { 'OK', 'Mumble IP set' }
 end
