@@ -2,7 +2,7 @@ class 'VoiceEvents'
 
 local bit32 = require "__shared/Util/bit32"
 
-local MAX_TALKING_RADIUS = 75
+local MAX_TALKING_RADIUS = 40
 local MAX_TALKING_RADIUS_POW = MAX_TALKING_RADIUS*MAX_TALKING_RADIUS
 
 function VoiceEvents:__init()
